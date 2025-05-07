@@ -1,106 +1,623 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Apartment Management System</title>
+    <title>Login - Blue Moon Apartment Management System</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-blue: #4e73df;
+            --light-blue: #8bb3ff;
+            --dark-blue: #3a5fc8;
+        }
+        
         body {
-            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
             height: 100vh;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            
+            /* BACKGROUND IMAGE - Updated path */
+            background-image: url('/image/background.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: var(--primary-blue); /* Fallback if image fails to load */
+        }
+        
+        .login-container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12%;
+        }
+        
+        .login-form {
+            width: 1000px; /* Slightly reduced from 1120px */
+            padding: 120px 100px; /* Slightly reduced from 140px 112px */
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 50px; /* Slightly reduced from 56px */
+            backdrop-filter: blur(20px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
+            transform: translateY(0);
+            transition: all 0.4s ease;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-form:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 40px 70px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Background glow effect */
+        .glow {
+            position: absolute;
+            width: 200px; /* Slightly reduced from 210px */
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(78, 115, 223, 0.4) 0%, rgba(78, 115, 223, 0) 70%);
+            animation: pulse 10s infinite alternate;
+            z-index: -1;
+        }
+        
+        .glow-1 {
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+        
+        .glow-2 {
+            bottom: -100px;
+            right: -100px;
+            animation-delay: 5s;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.4;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.6;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.4;
+            }
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 35px; /* Slightly reduced from 42px */
+            animation: fadeIn 1s ease;
+        }
+        
+        .login-header h2 {
+            font-size: 76px; /* Slightly reduced from 84px */
+            font-weight: 700;
+            letter-spacing: 3px;
+            margin-bottom: 18px;
+            color: var(--primary-blue);
+        }
+        
+        .login-subtitle {
+            text-align: center;
+            font-size: 30px; /* Slightly reduced from 34px */
+            font-weight: 400;
+            color: var(--dark-blue);
+            margin-bottom: 60px; /* Slightly reduced from 70px */
+            opacity: 0.7;
+            letter-spacing: 0.7px;
+        }
+        
+        .blue-moon {
+            font-weight: 600;
+            color: var(--primary-blue);
+            position: relative;
+            display: inline-block;
+        }
+        
+        .blue-moon::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            bottom: -6px;
+            left: 0;
+            background-color: var(--primary-blue);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s ease;
+        }
+        
+        .login-form:hover .blue-moon::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+        
+        .input-field {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 4px solid var(--primary-blue);
+            border-radius: 90px; /* Slightly reduced from 98px */
+            padding: 38px 50px; /* Slightly reduced from 42px 56px */
+            margin-bottom: 60px; /* Slightly reduced from 70px */
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:hover, .input-field:focus-within {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-color: var(--dark-blue);
+            box-shadow: 0 0 30px rgba(78, 115, 223, 0.3);
+            transform: translateY(-6px);
+        }
+        
+        .input-field .icon-container {
+            background-color: var(--primary-blue);
+            color: white;
+            width: 100px; /* Slightly reduced from 112px */
+            height: 100px; /* Slightly reduced from 112px */
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin-right: 42px; /* Slightly reduced from 49px */
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
-        .login-form {
-            max-width: 400px;
+        
+        .input-field:hover .icon-container,
+        .input-field:focus-within .icon-container {
+            transform: scale(1.1);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+            background-color: var(--dark-blue);
+        }
+        
+        .input-field i {
+            font-size: 40px; /* Slightly reduced from 45px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
             width: 100%;
-            padding: 30px;
+            height: 100%;
+        }
+        
+        .input-field input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--primary-blue);
+            font-size: 38px; /* Slightly reduced from 42px */
+            width: 100%;
+        }
+        
+        .input-field input::placeholder {
+            color: rgba(78, 115, 223, 0.7);
+        }
+        
+        .btn-login {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 90px; /* Slightly reduced from 98px */
+            padding: 38px; /* Slightly reduced from 42px */
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            width: 100%;
+            margin-top: 50px; /* Slightly reduced from 56px */
+            transition: all 0.3s ease;
+            font-size: 40px; /* Slightly reduced from 45px */
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-login:hover {
+            background-color: var(--dark-blue);
+            transform: translateY(-6px);
+            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.6),
+                transparent
+            );
+            transition: 0.5s;
+        }
+        
+        .btn-login:hover::before {
+            left: 100%;
+        }
+        
+        /* Stars effect */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -2;
+        }
+        
+        .star {
+            position: absolute;
             background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            border: 1px solid #ddd;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle var(--duration) ease-in-out infinite;
+            animation-delay: var(--delay);
         }
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; }
+            50% { opacity: var(--opacity); }
         }
-        .login-header i {
-            font-size: 3rem;
-            color: #4e73df;
-            margin-bottom: 15px;
+        
+        /* Enhanced Cloud animation styles */
+        .cloud {
+            position: absolute;
+            z-index: -1;
+            opacity: 0.8;
+            filter: drop-shadow(0 6px 18px rgba(255, 255, 255, 0.3));
         }
-        .btn-primary {
-            background-color: #4e73df;
-            border-color: #4e73df;
+        
+        .cloud-1 {
+            top: 10%;
+            right: 60%;
+            animation: float-right-to-left 50s linear infinite;
+            transform: scale(2.3); /* Slightly reduced from 2.5 */
         }
-        .btn-primary:hover {
-            background-color: #3a5fc8;
-            border-color: #3a5fc8;
+        
+        .cloud-2 {
+            top: 25%;
+            left: 50%;
+            animation: float-left-to-right 60s linear infinite;
+            transform: scale(2.8); /* Slightly reduced from 3.1 */
         }
-        .form-control:focus {
-            border-color: #4e73df;
-            box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+        
+        .cloud-3 {
+            top: 15%;
+            left: 10%;
+            animation: float-left-to-right-slow 70s linear infinite;
+            transform: scale(1.9); /* Slightly reduced from 2.1 */
         }
-        .login-footer {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: #6c757d;
+        
+        .cloud-4 {
+            bottom: 20%;
+            right: 20%;
+            animation: float-right-to-left-slow 65s linear infinite;
+            transform: scale(2.5); /* Slightly reduced from 2.8 */
+        }
+        
+        .cloud-5 {
+            bottom: 35%;
+            left: 30%;
+            animation: float-bounce 55s linear infinite;
+            transform: scale(2.2); /* Slightly reduced from 2.4 */
+        }
+        
+        /* Additional clouds */
+        .cloud-6 {
+            top: 45%;
+            right: 30%;
+            animation: float-right-to-left 75s linear infinite;
+            transform: scale(2.9); /* Slightly reduced from 3.2 */
+        }
+        
+        .cloud-7 {
+            bottom: 15%;
+            left: 15%;
+            animation: float-left-to-right 80s linear infinite;
+            transform: scale(2.4); /* Slightly reduced from 2.7 */
+        }
+        
+        @keyframes float-right-to-left {
+            0% { transform: translateX(120px) scale(2.3); } /* Slightly reduced */
+            50% { transform: translateX(-120px) scale(2.5); } /* Slightly reduced */
+            100% { transform: translateX(-360px) scale(2.3); } /* Slightly reduced */
+        }
+        
+        @keyframes float-left-to-right {
+            0% { transform: translateX(-240px) scale(2.8); } /* Slightly reduced */
+            50% { transform: translateX(120px) scale(3.0); } /* Slightly reduced */
+            100% { transform: translateX(480px) scale(2.8); } /* Slightly reduced */
+        }
+        
+        @keyframes float-left-to-right-slow {
+            0% { transform: translateX(-180px) scale(1.9); } /* Slightly reduced */
+            50% { transform: translateX(120px) scale(2.1); } /* Slightly reduced */
+            100% { transform: translateX(420px) scale(1.9); } /* Slightly reduced */
+        }
+        
+        @keyframes float-right-to-left-slow {
+            0% { transform: translateX(220px) scale(2.5); } /* Slightly reduced */
+            50% { transform: translateX(0px) scale(2.7); } /* Slightly reduced */
+            100% { transform: translateX(-340px) scale(2.5); } /* Slightly reduced */
+        }
+        
+        @keyframes float-bounce {
+            0% { transform: translate(0, 0) scale(2.2); } /* Slightly reduced */
+            25% { transform: translate(120px, -24px) scale(2.3); } /* Slightly reduced */
+            50% { transform: translate(240px, 0) scale(2.4); } /* Slightly reduced */
+            75% { transform: translate(120px, 24px) scale(2.3); } /* Slightly reduced */
+            100% { transform: translate(0, 0) scale(2.2); } /* Slightly reduced */
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-12px); } /* Slightly reduced */
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Alert styling */
+        .alert-custom {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 30px; /* Slightly reduced from 35px */
+            margin-bottom: 50px; /* Slightly reduced from 56px */
+            padding: 30px; /* Slightly reduced from 35px */
+            font-size: 30px; /* Slightly reduced from 34px */
+            color: #721c24;
+            border-left: 8px solid #f8d7da;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-12px); } /* Slightly reduced */
+            20%, 40%, 60%, 80% { transform: translateX(12px); } /* Slightly reduced */
+        }
+
+        @media (max-width: 1440px) {
+            .login-container {
+                justify-content: center;
+                padding-right: 0;
+            }
+            
+            .login-form {
+                width: 90%;
+                max-width: 900px;
+                padding: 70px 50px;
+            }
+            
+            .login-header h2 {
+                font-size: 56px;
+            }
+            
+            .login-subtitle {
+                font-size: 26px;
+                margin-bottom: 50px;
+            }
+            
+            .input-field {
+                padding: 30px 40px;
+                margin-bottom: 50px;
+            }
+            
+            .input-field .icon-container {
+                width: 80px;
+                height: 80px;
+                margin-right: 30px;
+            }
+            
+            .input-field i {
+                font-size: 32px;
+            }
+            
+            .input-field input {
+                font-size: 32px;
+            }
+            
+            .btn-login {
+                padding: 30px;
+                font-size: 32px;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .login-form {
+                width: 95%;
+                padding: 60px 40px;
+            }
+            
+            .login-header h2 {
+                font-size: 46px;
+            }
+            
+            .login-subtitle {
+                font-size: 22px;
+                margin-bottom: 40px;
+            }
+            
+            .input-field {
+                padding: 25px 30px;
+                margin-bottom: 40px;
+                border-width: 3px;
+            }
+            
+            .input-field .icon-container {
+                width: 60px;
+                height: 60px;
+                margin-right: 25px;
+            }
+            
+            .input-field i {
+                font-size: 26px;
+            }
+            
+            .input-field input {
+                font-size: 26px;
+            }
+            
+            .btn-login {
+                padding: 25px;
+                font-size: 26px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-form">
-        <div class="login-header">
-            <i class="fas fa-building"></i>
-            <h2>Apartment Management</h2>
-            <p class="text-muted">Sign in to your account</p>
-        </div>
-
-        <% if (typeof error !== 'undefined') { %>
-            <div class="alert alert-danger" role="alert">
-                <%= error %>
+    <!-- Stars background -->
+    <div class="stars" id="stars"></div>
+    
+    <!-- Enhanced Cloud elements that will show over your background -->
+    <div class="cloud cloud-1">
+        <svg width="200" height="100" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="80" cy="50" rx="70" ry="35" fill="white"/>
+            <ellipse cx="130" cy="60" rx="50" ry="25" fill="white"/>
+            <ellipse cx="50" cy="40" rx="40" ry="25" fill="white"/>
+        </svg>
+    </div>
+    
+    <div class="cloud cloud-2">
+        <svg width="220" height="110" viewBox="0 0 220 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="90" cy="55" rx="80" ry="40" fill="white"/>
+            <ellipse cx="150" cy="65" rx="55" ry="28" fill="white"/>
+            <ellipse cx="60" cy="45" rx="45" ry="28" fill="white"/>
+        </svg>
+    </div>
+    
+    <div class="cloud cloud-3">
+        <svg width="180" height="90" viewBox="0 0 180 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="75" cy="45" rx="60" ry="30" fill="white"/>
+            <ellipse cx="120" cy="52" rx="45" ry="22" fill="white"/>
+            <ellipse cx="45" cy="38" rx="37" ry="22" fill="white"/>
+        </svg>
+    </div>
+    
+    <div class="cloud cloud-4">
+        <svg width="240" height="120" viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="100" cy="60" rx="85" ry="42" fill="white"/>
+            <ellipse cx="160" cy="70" rx="60" ry="30" fill="white"/>
+            <ellipse cx="65" cy="50" rx="50" ry="30" fill="white"/>
+        </svg>
+    </div>
+    
+    <div class="cloud cloud-5">
+        <svg width="200" height="100" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="85" cy="50" rx="65" ry="32" fill="white"/>
+            <ellipse cx="135" cy="58" rx="48" ry="24" fill="white"/>
+            <ellipse cx="55" cy="42" rx="42" ry="24" fill="white"/>
+        </svg>
+    </div>
+    
+    <div class="cloud cloud-6">
+        <svg width="250" height="125" viewBox="0 0 250 125" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="110" cy="62" rx="90" ry="45" fill="white"/>
+            <ellipse cx="180" cy="72" rx="55" ry="28" fill="white"/>
+            <ellipse cx="70" cy="52" rx="50" ry="30" fill="white"/>
+        </svg>
+    </div>
+    
+    <div class="cloud cloud-7">
+        <svg width="210" height="105" viewBox="0 0 210 105" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="90" cy="52" rx="75" ry="38" fill="white"/>
+            <ellipse cx="145" cy="62" rx="50" ry="25" fill="white"/>
+            <ellipse cx="60" cy="45" rx="45" ry="25" fill="white"/>
+        </svg>
+    </div>
+    
+    <div class="login-container">
+        <div class="login-form">
+            <!-- Background glow effects -->
+            <div class="glow glow-1"></div>
+            <div class="glow glow-2"></div>
+            
+            <div class="login-header">
+                <h2>ĐĂNG NHẬP</h2>
             </div>
-        <% } %>
-
-        <form action="/login" method="POST">
-            <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-user"></i></span>
-                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
+            
+            <div class="login-subtitle">
+                Hệ thống quản lý chung cư <span class="blue-moon">Blue Moon</span>
+            </div>
+            
+            <% if (typeof error !== 'undefined') { %>
+                <div class="alert-custom" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <%= error %>
                 </div>
-            </div>
+            <% } %>
             
-            <div class="mb-4">
-                <label for="password" class="form-label">Password</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+            <form action="/login" method="POST">
+                <div class="input-field">
+                    <div class="icon-container">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <input type="text" id="username" name="username" placeholder="Tên tài khoản" required>
                 </div>
-            </div>
-            
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="rememberMe">
-                <label class="form-check-label" for="rememberMe">Remember me</label>
-                <a href="#" class="float-end">Forgot password?</a>
-            </div>
-            
-            <div class="d-grid">
-                <button type="submit" class="btn btn-primary">Sign In</button>
-            </div>
-        </form>
-        
-        <div class="login-footer">
-            <p>&copy; 2025 Apartment Management System</p>
-            <p>For assistance, contact your building administrator</p>
+                
+                <div class="input-field">
+                    <div class="icon-container">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <input type="password" id="password" name="password" placeholder="Mật khẩu" required>
+                </div>
+                
+                <button type="submit" class="btn-login">ĐĂNG NHẬP</button>
+            </form>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Script for stars effect -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const starsContainer = document.getElementById('stars');
+            const starsCount = 100;
+            
+            for (let i = 0; i < starsCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                // Random position
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                
+                // Random size (1-4px)
+                const size = Math.random() * 3 + 1;
+                
+                // Random opacity and duration
+                const opacity = Math.random() * 0.5 + 0.3;
+                const duration = Math.random() * 3 + 2 + 's';
+                const delay = Math.random() * 5 + 's';
+                
+                star.style.left = x + '%';
+                star.style.top = y + '%';
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.setProperty('--opacity', opacity);
+                star.style.setProperty('--duration', duration);
+                star.style.setProperty('--delay', delay);
+                
+                starsContainer.appendChild(star);
+            }
+        });
+    </script>
 </body>
 </html>
