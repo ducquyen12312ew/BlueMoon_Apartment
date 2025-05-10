@@ -444,6 +444,21 @@ app.get("/clear-payment-data", ensureAuthenticated, ensureAdmin, async (req, res
         res.status(500).send("Error clearing payment data");
     }
 });
+app.get("/reset-sample-data", ensureAuthenticated, ensureAdmin, async (req, res) => {
+    try {
+        // Clear existing sample data
+        await KhoanThuCollection.deleteMany({});
+        await NopTienCollection.deleteMany({});
+        
+        // Create new sample data
+        await createSampleData();
+        
+        res.redirect("/admin/dashboard");
+    } catch (error) {
+        console.error("Error resetting sample data:", error);
+        res.status(500).send("Error resetting sample data");
+    }
+});
 // Middleware functions to ensure authentication and role permissions
 function ensureAuthenticated(req, res, next) {
     if (req.session.userId) {

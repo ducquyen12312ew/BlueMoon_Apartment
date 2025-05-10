@@ -373,6 +373,30 @@ async function createSampleData() {
         if (khoanThuExist === 0) {
             // Create some sample khoản thu
             const khoanThuList = [
+                {
+                    maKhoanThu: "PVS2023",
+                    tenKhoanThu: "Phí vệ sinh 2023",
+                    soTien: 200000,
+                    loaiKhoanThu: 0,
+                    ngayTao: new Date('2023-01-01'),
+                    hanThanhToan: new Date('2023-01-31')
+                },
+                {
+                    maKhoanThu: "PDV2023",
+                    tenKhoanThu: "Phí dịch vụ Q1/2023",
+                    soTien: 500000,
+                    loaiKhoanThu: 0,
+                    ngayTao: new Date('2023-01-15'),
+                    hanThanhToan: new Date('2023-02-15')
+                },
+                {
+                    maKhoanThu: "QNM2023",
+                    tenKhoanThu: "Quỹ người nghèo 2023",
+                    soTien: 100000,
+                    loaiKhoanThu: 1,
+                    ngayTao: new Date('2023-02-01'),
+                    hanThanhToan: new Date('2023-03-01')
+                }
             ];
             await KhoanThuCollection.insertMany(khoanThuList);
             console.log('Sample khoan thu created');

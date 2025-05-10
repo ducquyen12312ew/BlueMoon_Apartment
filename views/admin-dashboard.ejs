@@ -323,8 +323,8 @@
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
+     <!-- Main Content -->
+     <div class="main-content">
         <div class="page-header">
             <h1 class="page-title">TRANG CHỦ</h1>
         </div>
@@ -333,7 +333,7 @@
         <div class="stats-cards">
             <div class="stat-card stat-card-blue">
                 <div class="stat-info">
-                    <h2><%= totalApartments %></h2>
+                    <h2>245</h2>
                     <p>Tổng số căn hộ</p>
                 </div>
                 <div class="stat-icon">
@@ -342,7 +342,7 @@
             </div>
             <div class="stat-card stat-card-orange">
                 <div class="stat-info">
-                    <h2><%= totalResidents %></h2>
+                    <h2>789</h2>
                     <p>Tổng số cư dân</p>
                 </div>
                 <div class="stat-icon">
@@ -351,7 +351,7 @@
             </div>
             <div class="stat-card stat-card-purple">
                 <div class="stat-info">
-                    <h2><%= paymentPercentage %>%</h2>
+                    <h2>89.5%</h2>
                     <p>Tỷ lệ đã thu phí</p>
                 </div>
                 <div class="stat-icon">
@@ -360,7 +360,7 @@
             </div>
             <div class="stat-card stat-card-red">
                 <div class="stat-info">
-                    <h2><%= unpaidHouseholds %></h2>
+                    <h2>26</h2>
                     <p>Hộ chưa thu phí</p>
                 </div>
                 <div class="stat-icon">
@@ -372,18 +372,18 @@
         <!-- Charts -->
         <div class="charts-container">
             <!-- Bar Chart -->
-            <div class="chart-card bar-chart-card">
+            <div class="chart-card">
                 <h2 class="chart-title">Lịch sử thu phí trong 7 tháng qua</h2>
                 <canvas id="barChart"></canvas>
             </div>
             
             <!-- Pie Chart -->
-            <div class="chart-card pie-chart-card">
+            <div class="chart-card">
                 <h2 class="chart-title">Tỷ lệ thu phí Q3/2023</h2>
                 <div id="pieChartContainer">
                     <canvas id="pieChart"></canvas>
                     <div class="doughnut-center-text">
-                        <div class="doughnut-percentage"><%= paymentPercentage %>%</div>
+                        <div class="doughnut-percentage">89.5%</div>
                         <div class="doughnut-label">Đã thu</div>
                     </div>
                 </div>
@@ -399,18 +399,18 @@
             const barChart = new Chart(barChartCtx, {
                 type: 'bar',
                 data: {
-                    labels: <%= JSON.stringify(monthlyData.map(item => item.month)) %>,
+                    labels: ['T1/2023', 'T2/2023', 'T3/2023', 'T4/2023', 'T5/2023', 'T6/2023', 'T7/2023'],
                     datasets: [
                         {
                             label: 'Đã thu',
-                            data: <%= JSON.stringify(monthlyData.map(item => item.paid)) %>,
+                            data: [70, 80, 90, 75, 100, 120, 125],
                             backgroundColor: '#36a2eb',
                             borderColor: '#36a2eb',
                             borderWidth: 1
                         },
                         {
                             label: 'Tổng phí',
-                            data: <%= JSON.stringify(monthlyData.map(item => item.total)) %>,
+                            data: [30, 25, 30, 25, 30, 30, 35],
                             backgroundColor: '#4e73df',
                             borderColor: '#4e73df',
                             borderWidth: 1
@@ -419,7 +419,6 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
                     scales: {
                         x: {
                             stacked: true
@@ -445,12 +444,7 @@
                 data: {
                     labels: ['Đã thu đúng hạn', 'Đã thu trễ hạn', 'Chưa thu', 'Miễn giảm'],
                     datasets: [{
-                        data: [
-                            <%= paymentBreakdown.onTime %>, 
-                            <%= paymentBreakdown.late %>, 
-                            <%= paymentBreakdown.unpaid %>, 
-                            <%= paymentBreakdown.exempt %>
-                        ],
+                        data: [40, 30, 10, 20],
                         backgroundColor: [
                             '#4e73df',
                             '#1cc88a',
@@ -462,15 +456,22 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
                     cutout: '70%',
                     plugins: {
                         legend: {
-                            position: 'bottom',
-                            display: true
+                            position: 'bottom'
                         }
                     }
                 }
+            });
+            
+            // Menu item click handler
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    menuItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                });
             });
         });
     </script>
