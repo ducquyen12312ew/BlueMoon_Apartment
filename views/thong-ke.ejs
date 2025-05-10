@@ -413,78 +413,47 @@
                             <th>Thao tác</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>A0101</td>
-                            <td>Phí quản lý tháng 8/2023</td>
-                            <td>Nguyễn Văn A</td>
-                            <td>500,000 đ</td>
-                            <td>05/08/2023</td>
-                            <td><i class="fas fa-money-bill-wave paymethod-icon cash-method"></i> Tiền mặt</td>
-                            <td><span class="status-badge status-on-time">Đúng hạn</span></td>
-                            <td>
-                                <button class="action-btn" title="Xem chi tiết"><i class="fas fa-eye"></i></button>
-                                <button class="action-btn" title="In biên lai"><i class="fas fa-print"></i></button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>A0201</td>
-                            <td>Phí quản lý tháng 8/2023</td>
-                            <td>Trần Thị B</td>
-                            <td>500,000 đ</td>
-                            <td>10/08/2023</td>
-                            <td><i class="fas fa-credit-card paymethod-icon bank-method"></i> Chuyển khoản</td>
-                            <td><span class="status-badge status-on-time">Đúng hạn</span></td>
-                            <td>
-                                <button class="action-btn" title="Xem chi tiết"><i class="fas fa-eye"></i></button>
-                                <button class="action-btn" title="In biên lai"><i class="fas fa-print"></i></button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>A0302</td>
-                            <td>Phí quản lý tháng 8/2023</td>
-                            <td>Lê Văn C</td>
-                            <td>500,000 đ</td>
-                            <td>01/09/2023</td>
-                            <td><i class="fas fa-qrcode paymethod-icon qr-method"></i> Quét mã QR</td>
-                            <td><span class="status-badge status-late">Trễ hạn</span></td>
-                            <td>
-                                <button class="action-btn" title="Xem chi tiết"><i class="fas fa-eye"></i></button>
-                                <button class="action-btn" title="In biên lai"><i class="fas fa-print"></i></button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>4</td>
-                            <td>B0103</td>
-                            <td>Phí gửi xe tháng 8/2023</td>
-                            <td>Phạm Thị D</td>
-                            <td>150,000 đ</td>
-                            <td>08/08/2023</td>
-                            <td><i class="fas fa-money-bill-wave paymethod-icon cash-method"></i> Tiền mặt</td>
-                            <td><span class="status-badge status-on-time">Đúng hạn</span></td>
-                            <td>
-                                <button class="action-btn" title="Xem chi tiết"><i class="fas fa-eye"></i></button>
-                                <button class="action-btn" title="In biên lai"><i class="fas fa-print"></i></button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>5</td>
-                            <td>B0201</td>
-                            <td>Ủng hộ quỹ khuyến học Q3/2023</td>
-                            <td>Vũ Văn E</td>
-                            <td>200,000 đ</td>
-                            <td>15/08/2023</td>
-                            <td><i class="fas fa-credit-card paymethod-icon bank-method"></i> Chuyển khoản</td>
-                            <td><span class="status-badge status-on-time">Đúng hạn</span></td>
-                            <td>
-                                <button class="action-btn" title="Xem chi tiết"><i class="fas fa-eye"></i></button>
-                                <button class="action-btn" title="In biên lai"><i class="fas fa-print"></i></button>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <!-- Replace the static table body with this dynamic one -->
+<tbody>
+    <% if (payments && payments.length > 0) { %>
+        <% payments.forEach(function(payment, index) { %>
+            <tr>
+                <td><%= index + 1 %></td>
+                <td><%= payment.canHo %></td>
+                <td><%= payment.tenKhoanThu %></td>
+                <td><%= payment.tenNguoiNop %></td>
+                <td><%= payment.soTien.toLocaleString() %> đ</td>
+                <td><%= new Date(payment.ngayNop).toLocaleDateString('vi-VN') %></td>
+                <td>
+                    <% if (payment.phuongThucThanhToan === 'cash') { %>
+                        <i class="fas fa-money-bill-wave paymethod-icon cash-method"></i> Tiền mặt
+                    <% } else if (payment.phuongThucThanhToan === 'bank') { %>
+                        <i class="fas fa-credit-card paymethod-icon bank-method"></i> Chuyển khoản
+                    <% } else if (payment.phuongThucThanhToan === 'qr') { %>
+                        <i class="fas fa-qrcode paymethod-icon qr-method"></i> Quét mã QR
+                    <% } %>
+                </td>
+                <td>
+                    <% if (payment.trangThai === 'on-time') { %>
+                        <span class="status-badge status-on-time">Đúng hạn</span>
+                    <% } else if (payment.trangThai === 'late') { %>
+                        <span class="status-badge status-late">Trễ hạn</span>
+                    <% } else if (payment.trangThai === 'partial') { %>
+                        <span class="status-badge status-partial">Đóng một phần</span>
+                    <% } %>
+                </td>
+                <td>
+                    <button class="action-btn" title="Xem chi tiết" data-id="<%= payment.id %>"><i class="fas fa-eye"></i></button>
+                    <button class="action-btn" title="In biên lai" data-id="<%= payment.id %>"><i class="fas fa-print"></i></button>
+                </td>
+            </tr>
+        <% }); %>
+    <% } else { %>
+        <tr>
+            <td colspan="9" class="text-center">Không có dữ liệu nộp tiền</td>
+        </tr>
+    <% } %>
+</tbody>
                 </table>
             </div>
         </div>
@@ -504,7 +473,7 @@
                 responsive: true,
                 pageLength: 10,
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Tất cả"]],
-                order: [[0, 'asc']]
+                order: [[5, 'desc']] // Sort by ngayNop (date) column in descending order
             });
             
             // Menu item click handler

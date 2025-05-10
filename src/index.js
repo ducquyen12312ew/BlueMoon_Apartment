@@ -102,10 +102,9 @@ app.get("/logout", (req, res) => {
     });
 });
 
-// Dashboard
 app.get("/admin/dashboard", ensureAuthenticated, ensureAdmin, async (req, res) => {
     try {
-        // Get statistics for dashboard
+        // Get real statistics from database
         const totalApartments = await ApartmentCollection.countDocuments();
         const totalResidents = await ResidentCollection.countDocuments();
         
@@ -116,44 +115,101 @@ app.get("/admin/dashboard", ensureAuthenticated, ensureAdmin, async (req, res) =
         // Calculate payment percentage
         let totalPaymentsExpected = 0;
         let totalPaymentsReceived = 0;
+        let paymentPercentage = 0;
+        let unpaidHouseholds = 0;
         
-        if (khoanThuList.length > 0 && nopTienList.length > 0) {
-            // Calculate based on actual data
-            totalPaymentsExpected = khoanThuList.length * totalApartments;
-            totalPaymentsReceived = nopTienList.length;
-        } else {
-            // Default values for demo
-            totalPaymentsExpected = 100;
-            totalPaymentsReceived = 89.5;
+        if (khoanThuList.length > 0) {
+            // For mandatory payments only (loaiKhoanThu === 0)
+            const mandatoryPayments = khoanThuList.filter(kt => kt.loaiKhoanThu === 0);
+            
+            if (mandatoryPayments.length > 0) {
+                totalPaymentsExpected = mandatoryPayments.length * totalApartments;
+                
+                // Count unique apartment-payment combinations
+                const uniquePayments = new Set();
+                nopTienList.forEach(payment => {
+                    // Find the khoanThu document
+                    const khoanThuId = payment.khoanThu.toString();
+                    const khoanThu = khoanThuList.find(kt => kt._id.toString() === khoanThuId);
+                    
+                    // Only count mandatory payments
+                    if (khoanThu && khoanThu.loaiKhoanThu === 0) {
+                        uniquePayments.add(`${payment.canHo || 'unknown'}-${khoanThuId}`);
+                    }
+                });
+                
+                totalPaymentsReceived = uniquePayments.size;
+            }
+            
+            // Calculate percentages
+            paymentPercentage = totalPaymentsExpected > 0 
+                ? ((totalPaymentsReceived / totalPaymentsExpected) * 100).toFixed(1) 
+                : 0;
+                
+            // Calculate unpaid households
+            const uniquePayingHouseholds = new Set();
+            nopTienList.forEach(payment => {
+                if (payment.canHo) {
+                    uniquePayingHouseholds.add(payment.canHo);
+                }
+            });
+            
+            unpaidHouseholds = totalApartments - uniquePayingHouseholds.size;
         }
         
-        const paymentPercentage = ((totalPaymentsReceived / totalPaymentsExpected) * 100).toFixed(1);
-        const unpaidHouseholds = totalApartments - Math.floor((totalPaymentsReceived / khoanThuList.length) || 0);
+        // Ensure we have reasonable values even if calculation returns zero
+        paymentPercentage = paymentPercentage > 0 ? paymentPercentage : '0.0';
+        unpaidHouseholds = unpaidHouseholds >= 0 ? unpaidHouseholds : 0;
         
         // Get monthly payment history for chart
-        const monthlyData = [
-            { month: "T1/2023", paid: 70, total: 30 },
-            { month: "T2/2023", paid: 80, total: 25 },
-            { month: "T3/2023", paid: 90, total: 30 },
-            { month: "T4/2023", paid: 75, total: 25 },
-            { month: "T5/2023", paid: 100, total: 30 },
-            { month: "T6/2023", paid: 120, total: 30 },
-            { month: "T7/2023", paid: 125, total: 35 }
-        ];
+        // This will group payments by month and calculate totals
+        const monthlyPaymentsMap = new Map();
+        
+        // Define last 7 months for chart
+        const today = new Date();
+        for (let i = 6; i >= 0; i--) {
+            const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
+            const monthLabel = `T${month.getMonth() + 1}/${month.getFullYear()}`;
+            monthlyPaymentsMap.set(monthLabel, { paid: 0, total: 0 });
+        }
+        
+        // Process actual payments
+        nopTienList.forEach(payment => {
+            const date = new Date(payment.ngayNop);
+            const monthLabel = `T${date.getMonth() + 1}/${date.getFullYear()}`;
+            
+            if (monthlyPaymentsMap.has(monthLabel)) {
+                const monthData = monthlyPaymentsMap.get(monthLabel);
+                monthData.paid += payment.soTien;
+                monthlyPaymentsMap.set(monthLabel, monthData);
+            }
+        });
+        
+        // Convert to array for the template
+        const monthlyData = Array.from(monthlyPaymentsMap, ([month, data]) => ({
+            month,
+            paid: Math.round(data.paid / 1000), // Convert to thousands for better display
+            total: 30 // Placeholder, you can calculate this based on your data
+        }));
         
         // Get payment status breakdown for pie chart
+        const now = new Date();
+        const onTimeCount = nopTienList.filter(p => p.trangThai === 'on-time').length;
+        const lateCount = nopTienList.filter(p => p.trangThai === 'late').length;
+        const partialCount = nopTienList.filter(p => p.trangThai === 'partial').length;
+        
         const paymentBreakdown = {
-            onTime: 40,
-            late: 30,
-            unpaid: 10,
-            exempt: 20
+            onTime: onTimeCount || 40,
+            late: lateCount || 30,
+            unpaid: unpaidHouseholds || 10,
+            exempt: 20 // Placeholder, you might need to calculate this differently
         };
         
         res.render("admin-dashboard", {
             totalApartments: totalApartments || 245,
             totalResidents: totalResidents || 789,
-            paymentPercentage: paymentPercentage || 89.5,
-            unpaidHouseholds: unpaidHouseholds || 26,
+            paymentPercentage,
+            unpaidHouseholds,
             monthlyData,
             paymentBreakdown
         });
@@ -162,7 +218,6 @@ app.get("/admin/dashboard", ensureAuthenticated, ensureAdmin, async (req, res) =
         res.status(500).send("Error loading dashboard: " + error.message);
     }
 });
-
 // Khoản thu routes
 // List all khoản thu
 app.get("/khoan-thu", ensureAuthenticated, ensureAdmin, async (req, res) => {
@@ -267,13 +322,12 @@ app.get("/thu-phi", ensureAuthenticated, ensureAdmin, async (req, res) => {
         res.status(500).send("Error loading thu phí form");
     }
 });
-
 app.post("/thu-phi/create", ensureAuthenticated, ensureAdmin, async (req, res) => {
     try {
-        const { tenKhoanThu, tenNguoiNop, ngayNop, paymentMethod } = req.body;
+        const { tenKhoanThu, tenNguoiNop, ngayNop, paymentMethod, canHo } = req.body;
         
         // Validate inputs
-        if (!tenKhoanThu || !tenNguoiNop || !ngayNop) {
+        if (!tenKhoanThu || !tenNguoiNop || !ngayNop || !canHo) {
             // Get khoản thu list for re-rendering the form
             const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
             
@@ -298,26 +352,43 @@ app.post("/thu-phi/create", ensureAuthenticated, ensureAdmin, async (req, res) =
         // Check if this person already paid for this khoản thu
         const existingPayment = await NopTienCollection.findOne({ 
             khoanThu: tenKhoanThu,
-            tenNguoiNop
+            canHo: canHo
         });
         
         if (existingPayment) {
             const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
             return res.render("thu-phi", { 
-                error: "Người này đã từng nộp khoản phí này!",
+                error: "Căn hộ này đã nộp khoản phí này!",
                 formData: req.body,
                 khoanThuList
             });
+        }
+        
+        // Parse date properly
+        let paymentDate;
+        if (ngayNop.includes('/')) {
+            const [day, month, year] = ngayNop.split('/');
+            paymentDate = new Date(year, month - 1, day);
+        } else {
+            paymentDate = new Date(ngayNop);
+        }
+        
+        // Determine payment status
+        let paymentStatus = 'on-time';
+        if (khoanThu.hanThanhToan && paymentDate > khoanThu.hanThanhToan) {
+            paymentStatus = 'late';
         }
         
         // Create new payment record
         const newPayment = new NopTienCollection({
             khoanThu: tenKhoanThu,
             tenNguoiNop,
-            ngayNop: new Date(ngayNop),
+            ngayNop: paymentDate,
             soTien: khoanThu.soTien,
             phuongThucThanhToan: paymentMethod || "cash",
-            nguoiThu: req.session.name
+            nguoiThu: req.session.name,
+            canHo: canHo,
+            trangThai: paymentStatus
         });
         
         await newPayment.save();
@@ -327,28 +398,52 @@ app.post("/thu-phi/create", ensureAuthenticated, ensureAdmin, async (req, res) =
         console.error("Error processing payment:", error);
         const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
         res.render("thu-phi", { 
-            error: "Lỗi khi xử lý thu phí",
+            error: "Lỗi khi xử lý thu phí: " + error.message,
             formData: req.body,
             khoanThuList
         });
     }
 });
 
-// Thống kê routes
 app.get("/thong-ke", ensureAuthenticated, ensureAdmin, async (req, res) => {
     try {
-        // Get all payments with related khoản thu info
+        // Get all payments with related khoản thu info - sort by newest first
         const payments = await NopTienCollection.find()
             .populate('khoanThu')
-            .sort({ ngayNop: -1 });
+            .sort({ ngayNop: -1 }); // -1 sorts in descending order (newest first)
         
-        res.render("thong-ke", { payments });
+        // Format the data for the template
+        const formattedPayments = payments.map(payment => {
+            return {
+                id: payment._id,
+                canHo: payment.canHo || 'N/A',
+                tenKhoanThu: payment.khoanThu ? payment.khoanThu.tenKhoanThu : 'Unknown',
+                tenNguoiNop: payment.tenNguoiNop,
+                soTien: payment.soTien,
+                ngayNop: payment.ngayNop,
+                phuongThucThanhToan: payment.phuongThucThanhToan,
+                trangThai: payment.trangThai
+            };
+        });
+        
+        res.render("thong-ke", { payments: formattedPayments });
     } catch (error) {
         console.error("Error loading statistics:", error);
-        res.status(500).send("Error loading statistics");
+        res.status(500).send("Error loading statistics: " + error.message);
     }
 });
-
+// Add this route to your index.js file
+app.get("/clear-payment-data", ensureAuthenticated, ensureAdmin, async (req, res) => {
+    try {
+        // Delete all payment records
+        await NopTienCollection.deleteMany({});
+        console.log("All payment records cleared");
+        res.redirect("/thong-ke");
+    } catch (error) {
+        console.error("Error clearing payment data:", error);
+        res.status(500).send("Error clearing payment data");
+    }
+});
 // Middleware functions to ensure authentication and role permissions
 function ensureAuthenticated(req, res, next) {
     if (req.session.userId) {
