@@ -1,14 +1,16 @@
 const mongoose = require('mongoose');
-const connect = mongoose.connect("mongodb://0.0.0.0:27017/ApartmentManagement");
+const connect = mongoose.connect("mongodb://0.0.0.0:27017/BlueMoonApartment");
 
 connect.then(() => {
     console.log("Database Connected Successfully");
+    // Ensure admin account exists
+    createDefaultAdmin();
 })
 .catch(() => {
     console.log("Database cannot be Connected");
 });
 
-// User Schema - Different roles for apartment management
+// User Schema - Admin role for apartment management
 const UserSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -26,8 +28,8 @@ const UserSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['admin', 'manager', 'security', 'resident'], 
-        default: 'resident'
+        enum: ['admin'], 
+        default: 'admin'
     },
     createdAt: {
         type: Date,
@@ -229,6 +231,84 @@ const NoticeSchema = new mongoose.Schema({
     }
 });
 
+// Khoản Thu Schema (Mới)
+const KhoanThuSchema = new mongoose.Schema({
+    maKhoanThu: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    tenKhoanThu: {
+        type: String,
+        required: true
+    },
+    soTien: {
+        type: Number,
+        required: true
+    },
+    loaiKhoanThu: {
+        type: Number,
+        enum: [0, 1], // 0: Bắt buộc, 1: Đóng góp tự nguyện
+        default: 0
+    },
+    ngayTao: {
+        type: Date,
+        default: Date.now
+    },
+    hanThanhToan: {
+        type: Date
+    },
+    moTa: {
+        type: String
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'users'
+    }
+});
+
+// Nộp Tiền Schema (Mới)
+const NopTienSchema = new mongoose.Schema({
+    khoanThu: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'khoanthus',
+        required: true
+    },
+    tenNguoiNop: {
+        type: String,
+        required: true
+    },
+    ngayNop: {
+        type: Date,
+        default: Date.now,
+        required: true
+    },
+    soTien: {
+        type: Number,
+        required: true
+    },
+    phuongThucThanhToan: {
+        type: String,
+        enum: ['cash', 'bank', 'qr'],
+        default: 'cash'
+    },
+    nguoiThu: {
+        type: String,
+        required: true
+    },
+    canHo: {
+        type: String
+    },
+    trangThai: {
+        type: String,
+        enum: ['on-time', 'late', 'partial'],
+        default: 'on-time'
+    },
+    ghiChu: {
+        type: String
+    }
+});
+
 // Create models from schemas
 const UserCollection = mongoose.model("users", UserSchema);
 const ApartmentCollection = mongoose.model("apartments", ApartmentSchema);
@@ -236,6 +316,144 @@ const ResidentCollection = mongoose.model("residents", ResidentSchema);
 const MaintenanceRequestCollection = mongoose.model("maintenanceRequests", MaintenanceRequestSchema);
 const PaymentCollection = mongoose.model("payments", PaymentSchema);
 const NoticeCollection = mongoose.model("notices", NoticeSchema);
+const KhoanThuCollection = mongoose.model("khoanthus", KhoanThuSchema);
+const NopTienCollection = mongoose.model("noptiens", NopTienSchema);
+
+// Function to create default admin account if none exists
+async function createDefaultAdmin() {
+    try {
+        const adminExists = await UserCollection.findOne({ role: 'admin' });
+        if (!adminExists) {
+            await UserCollection.create({
+                name: 'admin',
+                password: '123456789',
+                role: 'admin',
+                email: 'admin@apartmentmanagement.com'
+            });
+            
+            console.log('Default admin account created');
+        }
+
+        // Create sample data for demo
+        await createSampleData();
+    } catch (error) {
+        console.error('Error creating default admin account:', error);
+    }
+}
+
+// Function to create sample data for demo
+async function createSampleData() {
+    try {
+        // Create sample apartments if none exist
+        const apartmentsExist = await ApartmentCollection.countDocuments();
+        if (apartmentsExist === 0) {
+            // Create some sample apartments
+            const apartments = [];
+            for (let block of ['A', 'B']) {
+                for (let floor = 1; floor <= 5; floor++) {
+                    for (let unit = 1; unit <= 4; unit++) {
+                        const apartment = {
+                            number: `${block}${floor}${unit.toString().padStart(2, '0')}`,
+                            floor,
+                            block,
+                            type: unit <= 2 ? '2BHK' : '3BHK',
+                            area: unit <= 2 ? 75 : 100,
+                            isOccupied: Math.random() > 0.2 // 80% occupied
+                        };
+                        apartments.push(apartment);
+                    }
+                }
+            }
+            await ApartmentCollection.insertMany(apartments);
+            console.log('Sample apartments created');
+        }
+
+        // Create sample khoản thu if none exist
+        const khoanThuExist = await KhoanThuCollection.countDocuments();
+        if (khoanThuExist === 0) {
+            // Create some sample khoản thu
+            const khoanThuList = [
+                {
+                    maKhoanThu: 'QLTH08',
+                    tenKhoanThu: 'Phí quản lý tháng 8/2023',
+                    soTien: 500000,
+                    loaiKhoanThu: 0, // Bắt buộc
+                    ngayTao: new Date(2023, 7, 1), // Tháng 8
+                    hanThanhToan: new Date(2023, 7, 31)
+                },
+                {
+                    maKhoanThu: 'VSTH08',
+                    tenKhoanThu: 'Phí vệ sinh tháng 8/2023',
+                    soTien: 200000,
+                    loaiKhoanThu: 0,
+                    ngayTao: new Date(2023, 7, 1),
+                    hanThanhToan: new Date(2023, 7, 31)
+                },
+                {
+                    maKhoanThu: 'XETH08',
+                    tenKhoanThu: 'Phí gửi xe tháng 8/2023',
+                    soTien: 100000,
+                    loaiKhoanThu: 0,
+                    ngayTao: new Date(2023, 7, 1),
+                    hanThanhToan: new Date(2023, 7, 31)
+                },
+                {
+                    maKhoanThu: 'QUYKHQ3',
+                    tenKhoanThu: 'Ủng hộ quỹ khuyến học Q3/2023',
+                    soTien: 50000,
+                    loaiKhoanThu: 1, // Đóng góp tự nguyện
+                    ngayTao: new Date(2023, 6, 15),
+                    hanThanhToan: new Date(2023, 8, 30)
+                }
+            ];
+            await KhoanThuCollection.insertMany(khoanThuList);
+            console.log('Sample khoan thu created');
+        }
+
+        // Create sample nộp tiền if none exist
+        const nopTienExist = await NopTienCollection.countDocuments();
+        if (nopTienExist === 0 && khoanThuExist > 0) {
+            // Get the khoản thu list
+            const khoanThuList = await KhoanThuCollection.find();
+            
+            // Get some apartments for sample payments
+            const apartments = await ApartmentCollection.find().limit(20);
+            
+            // Create sample payments
+            const nopTienList = [];
+            for (let apt of apartments) {
+                for (let khoanThu of khoanThuList) {
+                    // 80% chance of paying
+                    if (Math.random() > 0.2) {
+                        // 70% chance of paying on time
+                        const isOnTime = Math.random() > 0.3;
+                        const paymentDate = isOnTime 
+                            ? new Date(khoanThu.ngayTao.getTime() + Math.random() * 10 * 24 * 60 * 60 * 1000) // 0-10 days after creation
+                            : new Date(khoanThu.hanThanhToan.getTime() + Math.random() * 10 * 24 * 60 * 60 * 1000); // 0-10 days after due date
+                        
+                        nopTienList.push({
+                            khoanThu: khoanThu._id,
+                            tenNguoiNop: `Chủ hộ căn ${apt.number}`,
+                            ngayNop: paymentDate,
+                            soTien: khoanThu.soTien,
+                            phuongThucThanhToan: ['cash', 'bank', 'qr'][Math.floor(Math.random() * 3)],
+                            nguoiThu: 'admin',
+                            canHo: apt.number,
+                            trangThai: isOnTime ? 'on-time' : 'late'
+                        });
+                    }
+                }
+            }
+            
+            if (nopTienList.length > 0) {
+                await NopTienCollection.insertMany(nopTienList);
+                console.log('Sample nop tien created');
+            }
+        }
+    } catch (error) {
+        console.error('Error creating sample data:', error);
+    }
+}
 
 // Export models
 module.exports = { 
@@ -244,5 +462,7 @@ module.exports = {
     ResidentCollection, 
     MaintenanceRequestCollection, 
     PaymentCollection,
-    NoticeCollection
+    NoticeCollection,
+    KhoanThuCollection,
+    NopTienCollection
 };

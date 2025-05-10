@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - BlueMoon</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-blue: #4e73df;
+            --light-blue: #8bb3ff;
+            --dark-blue: #3a5fc8;
+            --sidebar-width: 250px;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fc;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--primary-blue);
+            position: fixed;
+            left: 0;
+            top: 0;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .sidebar-menu {
+            padding: 25px 0;
+        }
+        
+        .menu-item {
+            padding: 18px 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .menu-item:hover {
+            background-color: var(--dark-blue);
+        }
+        
+        .menu-item.active {
+            background-color: var(--dark-blue);
+            border-left: 5px solid white;
+        }
+        
+        .menu-item i {
+            margin-right: 15px;
+            width: 24px;
+            text-align: center;
+            font-size: 20px;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            padding: 18px 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+        }
+        
+        .logout-btn:hover {
+            background-color: var(--dark-blue);
+        }
+        
+        .logout-btn i {
+            margin-right: 15px;
+            font-size: 20px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        /* Stats Cards */
+        .stats-cards {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            flex: 1;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 100px;
+        }
+        
+        .stat-card-blue {
+            border-left: 5px solid #4e73df;
+        }
+        
+        .stat-card-orange {
+            border-left: 5px solid #f6c23e;
+        }
+        
+        .stat-card-purple {
+            border-left: 5px solid #8c6dcf;
+        }
+        
+        .stat-card-red {
+            border-left: 5px solid #e74a3b;
+        }
+        
+        .stat-info h2 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-info p {
+            color: #888;
+            margin: 0;
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border-radius: 50%;
+            color: #e0e0e0;
+        }
+        
+        .stat-card-blue .stat-icon {
+            color: #4e73df;
+        }
+        
+        .stat-card-orange .stat-icon {
+            color: #f6c23e;
+        }
+        
+        .stat-card-purple .stat-icon {
+            color: #8c6dcf;
+        }
+        
+        .stat-card-red .stat-icon {
+            color: #e74a3b;
+        }
+        
+        /* Charts */
+        .charts-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            flex: 1;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .bar-chart-card {
+            flex: 2;
+        }
+        
+        .pie-chart-card {
+            flex: 1;
+        }
+        
+        .chart-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        /* Doughnut Chart Center Text */
+        #pieChartContainer {
+            position: relative;
+        }
+        
+        .doughnut-center-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .doughnut-percentage {
+            font-size: 30px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .doughnut-label {
+            font-size: 14px;
+            color: #888;
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .charts-container {
+                flex-direction: column;
+            }
+            
+            .chart-card {
+                margin-bottom: 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-cards {
+                flex-wrap: wrap;
+            }
+            
+            .stat-card {
+                flex: 1 0 45%;
+                margin-bottom: 20px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .stat-card {
+                flex: 1 0 100%;
+            }
+            
+            .sidebar {
+                width: 60px;
+            }
+            
+            .sidebar-header {
+                font-size: 18px;
+                padding: 15px 0;
+            }
+            
+            .menu-item span,
+            .logout-btn span {
+                display: none;
+            }
+            
+            .menu-item i,
+            .logout-btn i {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-left: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            BLUEMOON
+        </div>
+        <div class="sidebar-menu">
+            <a href="/admin/dashboard" class="menu-item active">
+                <i class="fas fa-home"></i>
+                <span>Trang chủ</span>
+            </a>
+            <a href="/khoan-thu" class="menu-item">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Khoản thu</span>
+            </a>
+            <a href="/thong-ke" class="menu-item">
+                <i class="fas fa-chart-bar"></i>
+                <span>Thống kê</span>
+            </a>
+        </div>
+        <div class="logout-btn">
+            <a href="/logout" style="color: white; text-decoration: none; display: flex; align-items: center;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>ĐĂNG XUẤT</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">TRANG CHỦ</h1>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-cards">
+            <div class="stat-card stat-card-blue">
+                <div class="stat-info">
+                    <h2><%= totalApartments %></h2>
+                    <p>Tổng số căn hộ</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+            </div>
+            <div class="stat-card stat-card-orange">
+                <div class="stat-info">
+                    <h2><%= totalResidents %></h2>
+                    <p>Tổng số cư dân</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div class="stat-card stat-card-purple">
+                <div class="stat-info">
+                    <h2><%= paymentPercentage %>%</h2>
+                    <p>Tỷ lệ đã thu phí</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+            </div>
+            <div class="stat-card stat-card-red">
+                <div class="stat-info">
+                    <h2><%= unpaidHouseholds %></h2>
+                    <p>Hộ chưa thu phí</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-container">
+            <!-- Bar Chart -->
+            <div class="chart-card bar-chart-card">
+                <h2 class="chart-title">Lịch sử thu phí trong 7 tháng qua</h2>
+                <canvas id="barChart"></canvas>
+            </div>
+            
+            <!-- Pie Chart -->
+            <div class="chart-card pie-chart-card">
+                <h2 class="chart-title">Tỷ lệ thu phí Q3/2023</h2>
+                <div id="pieChartContainer">
+                    <canvas id="pieChart"></canvas>
+                    <div class="doughnut-center-text">
+                        <div class="doughnut-percentage"><%= paymentPercentage %>%</div>
+                        <div class="doughnut-label">Đã thu</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Bar Chart
+            const barChartCtx = document.getElementById('barChart').getContext('2d');
+            const barChart = new Chart(barChartCtx, {
+                type: 'bar',
+                data: {
+                    labels: <%= JSON.stringify(monthlyData.map(item => item.month)) %>,
+                    datasets: [
+                        {
+                            label: 'Đã thu',
+                            data: <%= JSON.stringify(monthlyData.map(item => item.paid)) %>,
+                            backgroundColor: '#36a2eb',
+                            borderColor: '#36a2eb',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Tổng phí',
+                            data: <%= JSON.stringify(monthlyData.map(item => item.total)) %>,
+                            backgroundColor: '#4e73df',
+                            borderColor: '#4e73df',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            max: 200
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Pie Chart
+            const pieChartCtx = document.getElementById('pieChart').getContext('2d');
+            const pieChart = new Chart(pieChartCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Đã thu đúng hạn', 'Đã thu trễ hạn', 'Chưa thu', 'Miễn giảm'],
+                    datasets: [{
+                        data: [
+                            <%= paymentBreakdown.onTime %>, 
+                            <%= paymentBreakdown.late %>, 
+                            <%= paymentBreakdown.unpaid %>, 
+                            <%= paymentBreakdown.exempt %>
+                        ],
+                        backgroundColor: [
+                            '#4e73df',
+                            '#1cc88a',
+                            '#e74a3b',
+                            '#f6c23e'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            display: true
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

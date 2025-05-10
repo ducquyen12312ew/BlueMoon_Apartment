@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Khoản Thu Mới - BlueMoon</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #0066cc;
+            --light-blue: #8bb3ff;
+            --dark-blue: #0057b3;
+            --sidebar-width: 250px;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fc;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--primary-blue);
+            position: fixed;
+            left: 0;
+            top: 0;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .sidebar-menu {
+            padding: 25px 0;
+        }
+        
+        .menu-item {
+            padding: 18px 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+        }
+        
+        .menu-item:hover {
+            background-color: var(--dark-blue);
+        }
+        
+        .menu-item.active {
+            background-color: var(--dark-blue);
+            border-left: 5px solid white;
+        }
+        
+        .menu-item i {
+            margin-right: 15px;
+            width: 24px;
+            text-align: center;
+            font-size: 20px;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            padding: 18px 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+        }
+        
+        .logout-btn:hover {
+            background-color: var(--dark-blue);
+        }
+        
+        .logout-btn i {
+            margin-right: 15px;
+            font-size: 20px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 0;
+        }
+        
+        /* Form Card */
+        .form-card {
+            background-color: white;
+            border-radius: 10px;
+            margin: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-header {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 20px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        
+        .form-header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .form-header p {
+            margin: 5px 0 0 0;
+            font-size: 16px;
+        }
+        
+        .form-body {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .form-control {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+            width: 100%;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
+        }
+        
+        .required-field::after {
+            content: " *";
+            color: red;
+        }
+        
+        .input-group {
+            display: flex;
+        }
+        
+        .input-group .form-control {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        
+        .input-group-append {
+            display: flex;
+        }
+        
+        .input-group-text {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            border-left: none;
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            color: #495057;
+        }
+        
+        .form-date-picker {
+            position: relative;
+        }
+        
+        .form-date-picker .form-control {
+            padding-right: 40px;
+        }
+        
+        .form-date-picker i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .btn-secondary {
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+            color: #495057;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e2e6ea;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-blue);
+            border: 1px solid var(--primary-blue);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--dark-blue);
+            border-color: var(--dark-blue);
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .form-col {
+                width: 100%;
+                padding: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .main-content {
+                margin-left: 200px;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .sidebar {
+                width: 70px;
+            }
+            
+            .sidebar-header {
+                font-size: 20px;
+                padding: 15px 0;
+            }
+            
+            .menu-item span,
+            .logout-btn span {
+                display: none;
+            }
+            
+            .menu-item i,
+            .logout-btn i {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            BLUEMOON
+        </div>
+        <div class="sidebar-menu">
+            <div class="menu-item">
+                <i class="fas fa-home"></i>
+                <span>Trang chủ</span>
+            </div>
+            <div class="menu-item active">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Khoản thu</span>
+            </div>
+            <div class="menu-item">
+                <i class="fas fa-chart-bar"></i>
+                <span>Thống kê</span>
+            </div>
+        </div>
+        <div class="logout-btn">
+            <a href="/logout" style="color: white; text-decoration: none; display: flex; align-items: center;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>ĐĂNG XUẤT</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="form-card">
+            <div class="form-header">
+                <h1>Tạo Khoản Thu Mới</h1>
+                <p>Vui lòng điền các thông tin dưới đây</p>
+            </div>
+            <div class="form-body">
+                <form id="createKhoanThuForm" action="/khoan-thu/create" method="POST">
+                    <!-- Form Row 1 -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="maKhoanThu" class="form-label required-field">Mã khoản thu</label>
+                                <input type="text" class="form-control" id="maKhoanThu" name="maKhoanThu" placeholder="Nhập mã khoản thu" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="loaiKhoanThu" class="form-label">Loại khoản thu</label>
+                                <select class="form-control" id="loaiKhoanThu" name="loaiKhoanThu">
+                                    <option value="" selected disabled>Chọn loại khoản thu</option>
+                                    <option value="0">Bắt buộc</option>
+                                    <option value="1">Đóng góp tự nguyện</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Row 2 -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="tenKhoanThu" class="form-label required-field">Tên khoản thu</label>
+                                <input type="text" class="form-control" id="tenKhoanThu" name="tenKhoanThu" placeholder="Nhập tên khoản thu" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="soTien" class="form-label required-field">Số tiền</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="soTien" name="soTien" placeholder="Nhập số tiền" required>
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">VND</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Row 3 -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ngayTao" class="form-label">Ngày tạo</label>
+                                <div class="form-date-picker">
+                                    <input type="text" class="form-control" id="ngayTao" name="ngayTao" placeholder="dd/mm/yyyy">
+                                    <i class="far fa-calendar-alt"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="hanThanhToan" class="form-label">Hạn thanh toán</label>
+                                <div class="form-date-picker">
+                                    <input type="text" class="form-control" id="hanThanhToan" name="hanThanhToan" placeholder="dd/mm/yyyy">
+                                    <i class="far fa-calendar-alt"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Row 4 -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="moTa" class="form-label">Mô tả</label>
+                                <textarea class="form-control" id="moTa" name="moTa" placeholder="Nhập mô tả về khoản thu (không bắt buộc)"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="btnCancel">Hủy bỏ</button>
+                        <button type="submit" class="btn btn-primary" id="btnSubmit">Tạo khoản thu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Datepicker initialization
+            $("#ngayTao, #hanThanhToan").datepicker({
+                dateFormat: 'dd/mm/yy',
+                changeMonth: true,
+                changeYear: true,
+                yearRange: "2020:2030"
+            });
+            
+            // Cancel button handler
+            $("#btnCancel").click(function() {
+                // Redirect to khoản thu list or clear form
+                if (confirm("Bạn có chắc muốn hủy bỏ việc tạo khoản thu này?")) {
+                    window.location.href = "/khoan-thu";
+                }
+            });
+            
+            // Form validation before submit
+            $("#createKhoanThuForm").submit(function(event) {
+                let isValid = true;
+                
+                // Validate mã khoản thu
+                const maKhoanThu = $("#maKhoanThu").val().trim();
+                if (!maKhoanThu) {
+                    alert("Vui lòng nhập mã khoản thu");
+                    $("#maKhoanThu").focus();
+                    isValid = false;
+                }
+                
+                // Validate tên khoản thu
+                const tenKhoanThu = $("#tenKhoanThu").val().trim();
+                if (!tenKhoanThu) {
+                    alert("Vui lòng nhập tên khoản thu");
+                    $("#tenKhoanThu").focus();
+                    isValid = false;
+                }
+                
+                // Validate số tiền
+                const soTien = $("#soTien").val().trim();
+                if (!soTien || isNaN(soTien) || parseFloat(soTien) <= 0) {
+                    alert("Vui lòng nhập số tiền hợp lệ");
+                    $("#soTien").focus();
+                    isValid = false;
+                }
+                
+                if (!isValid) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
