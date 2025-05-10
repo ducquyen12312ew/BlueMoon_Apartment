@@ -6,11 +6,12 @@
     <title>Thu Phí - BlueMoon</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     <style>
         :root {
-            --primary-blue: #0066cc;
+            --primary-blue: #4e73df;
             --light-blue: #8bb3ff;
-            --dark-blue: #0057b3;
+            --dark-blue: #3a5fc8;
             --sidebar-width: 250px;
         }
         
@@ -53,6 +54,8 @@
             display: flex;
             align-items: center;
             font-size: 18px;
+            text-decoration: none;
+            color: white;
         }
         
         .menu-item:hover {
@@ -144,11 +147,12 @@
             border-radius: 5px;
             border: 1px solid #ced4da;
             width: 100%;
+            font-size: 16px;
         }
         
         .form-control:focus {
             border-color: var(--primary-blue);
-            box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
         }
         
         .required-field::after {
@@ -156,20 +160,152 @@
             color: red;
         }
         
+        /* Enhanced Date Picker Styling */
         .form-date-picker {
             position: relative;
         }
-        
+
         .form-date-picker .form-control {
             padding-right: 40px;
+            height: 45px;
+            font-size: 16px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            background-color: white;
         }
-        
+
+        .form-date-picker .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+        }
+
         .form-date-picker i {
             position: absolute;
             right: 15px;
             top: 50%;
             transform: translateY(-50%);
-            color: #6c757d;
+            color: var(--primary-blue);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* Date Picker Calendar Styling (jQuery UI) */
+        .ui-datepicker {
+            width: 320px;
+            padding: 15px;
+            background: #fff;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            z-index: 9999 !important;
+        }
+
+        .ui-datepicker .ui-datepicker-header {
+            padding: 12px 0;
+            border: none;
+            background: var(--primary-blue);
+            border-radius: 8px;
+            color: white;
+        }
+
+        .ui-datepicker .ui-datepicker-title {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .ui-datepicker .ui-datepicker-prev, 
+        .ui-datepicker .ui-datepicker-next {
+            top: 12px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .ui-datepicker .ui-datepicker-prev span, 
+        .ui-datepicker .ui-datepicker-next span {
+            display: none;
+        }
+
+        .ui-datepicker .ui-datepicker-prev:before {
+            content: "←";
+            color: white;
+            font-size: 18px;
+            position: absolute;
+            left: 12px;
+            top: 8px;
+        }
+
+        .ui-datepicker .ui-datepicker-next:before {
+            content: "→";
+            color: white;
+            font-size: 18px;
+            position: absolute;
+            right: 12px;
+            top: 8px;
+        }
+
+        .ui-datepicker .ui-datepicker-calendar {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .ui-datepicker th {
+            padding: 10px 0;
+            font-weight: bold;
+            color: var(--primary-blue);
+        }
+
+        .ui-datepicker td span, 
+        .ui-datepicker td a {
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+
+        .ui-datepicker td a.ui-state-default {
+            background: #f8f9fc;
+            border: none;
+            color: #333;
+        }
+
+        .ui-datepicker td a.ui-state-default:hover {
+            background: var(--light-blue);
+            color: white;
+        }
+
+        .ui-datepicker td a.ui-state-active {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .ui-datepicker td a.ui-state-highlight {
+            background: rgba(78, 115, 223, 0.1);
+            border: 1px solid var(--primary-blue);
+        }
+
+        .ui-datepicker .ui-datepicker-buttonpane {
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .ui-datepicker .ui-datepicker-buttonpane button {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .ui-datepicker .ui-datepicker-buttonpane button:hover {
+            background: var(--dark-blue);
         }
         
         /* Payment method styles */
@@ -184,32 +320,35 @@
             flex: 1;
             min-width: 120px;
             border: 1px solid #ced4da;
-            border-radius: 5px;
-            padding: 15px;
+            border-radius: 8px;
+            padding: 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
         
         .payment-method:hover {
             border-color: var(--primary-blue);
-            background-color: #f8f9fc;
+            background-color: rgba(78, 115, 223, 0.05);
+            transform: translateY(-3px);
         }
         
         .payment-method.selected {
             border-color: var(--primary-blue);
-            background-color: rgba(0, 102, 204, 0.1);
+            background-color: rgba(78, 115, 223, 0.1);
+            box-shadow: 0 5px 15px rgba(78, 115, 223, 0.1);
         }
         
         .payment-method i {
-            font-size: 24px;
-            margin-bottom: 8px;
+            font-size: 28px;
+            margin-bottom: 12px;
             color: var(--primary-blue);
         }
         
         .payment-method-name {
             font-weight: 500;
-            font-size: 14px;
+            font-size: 16px;
         }
         
         .form-actions {
@@ -220,11 +359,12 @@
         }
         
         .btn {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 5px;
             font-weight: 500;
             transition: all 0.3s;
             cursor: pointer;
+            font-size: 16px;
         }
         
         .btn-secondary {
@@ -246,6 +386,28 @@
         .btn-primary:hover {
             background-color: var(--dark-blue);
             border-color: var(--dark-blue);
+        }
+        
+        /* Alert styles */
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+            border-left-color: #dc3545;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+            border-left-color: #28a745;
         }
         
         /* Responsive Styles */
@@ -280,6 +442,11 @@
             .btn {
                 width: 100%;
             }
+
+            .ui-datepicker {
+                width: 280px;
+                font-size: 14px;
+            }
         }
         
         @media (max-width: 576px) {
@@ -305,17 +472,27 @@
             .main-content {
                 margin-left: 70px;
             }
+
+            .ui-datepicker {
+                width: 260px;
+                font-size: 14px;
+            }
+            
+            .ui-datepicker td span, 
+            .ui-datepicker td a {
+                padding: 8px;
+            }
         }
     </style>
 </head>
 <body>
-       <!-- Sidebar -->
-       <div class="sidebar">
+    <!-- Sidebar -->
+    <div class="sidebar">
         <div class="sidebar-header">
             BLUEMOON
         </div>
         <div class="sidebar-menu">
-            <a href="/admin/dashboard" class="menu-item active">
+            <a href="/admin/dashboard" class="menu-item">
                 <i class="fas fa-home"></i>
                 <span>Trang chủ</span>
             </a>
@@ -323,8 +500,8 @@
                 <i class="fas fa-money-bill-wave"></i>
                 <span>Khoản thu</span>
             </a>
-            <a href="/thu-phi" class="menu-item">
-                <i class="fas fa-money-bill-wave"></i>
+            <a href="/thu-phi" class="menu-item active">
+                <i class="fas fa-hand-holding-dollar"></i>
                 <span>Thu phí</span>
             </a>
             <a href="/thong-ke" class="menu-item">
@@ -339,6 +516,7 @@
             </a>
         </div>
     </div>
+    
     <!-- Main Content -->
     <div class="main-content">
         <div class="form-card">
@@ -347,9 +525,16 @@
                 <p>Thông tin thu phí cư dân</p>
             </div>
             <div class="form-body">
+                <% if (typeof error !== 'undefined') { %>
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <%= error %>
+                    </div>
+                <% } %>
+                
                 <form id="thuPhiForm" action="/thu-phi/create" method="POST">
                     <!-- Form Row 1 -->
-                    <div class="row">
+                    <div class="row mb-3">
                         <div class="col-12">
                             <div class="form-group">
                                 <label for="tenKhoanThu" class="form-label required-field">Tên khoản thu</label>
@@ -368,27 +553,28 @@
                     </div>
                     
                     <!-- Form Row 2 -->
-                    <div class="row">
-                        <div class="col-12">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="tenNguoiNop" class="form-label required-field">Tên người nộp</label>
                                 <input type="text" class="form-control" id="tenNguoiNop" name="tenNguoiNop" placeholder="Nhập tên người nộp" required>
-                                <!-- Add this to your form after the tenNguoiNop field -->
-<div class="form-group">
-    <label for="canHo" class="form-label required-field">Căn hộ</label>
-    <input type="text" class="form-control" id="canHo" name="canHo" placeholder="Ví dụ: A0101" required>
-</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="canHo" class="form-label required-field">Căn hộ</label>
+                                <input type="text" class="form-control" id="canHo" name="canHo" placeholder="Ví dụ: A0101" required>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Form Row 3 -->
-                    <div class="row">
+                    <div class="row mb-3">
                         <div class="col-12">
                             <div class="form-group">
                                 <label for="ngayNop" class="form-label required-field">Ngày nộp</label>
                                 <div class="form-date-picker">
-                                    <input type="text" class="form-control" id="ngayNop" name="ngayNop" placeholder="dd/mm/yyyy" value="08/10/2023" required>
+                                    <input type="text" class="form-control date-picker" id="ngayNop" name="ngayNop" placeholder="dd/mm/yyyy" readonly required>
                                     <i class="far fa-calendar-alt"></i>
                                 </div>
                             </div>
@@ -436,13 +622,46 @@
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Datepicker initialization
-            $("#ngayNop").datepicker({
+            // Enhanced datepicker initialization
+            $(".date-picker").datepicker({
                 dateFormat: 'dd/mm/yy',
                 changeMonth: true,
                 changeYear: true,
-                yearRange: "2020:2030"
+                yearRange: "2020:2030",
+                showButtonPanel: true,
+                currentText: "Hôm nay",
+                closeText: "Đóng",
+                dayNames: ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"],
+                dayNamesMin: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
+                monthNames: ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"],
+                monthNamesShort: ["Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"],
+                beforeShow: function(input, inst) {
+                    // Add a class to make the calendar appear above other elements
+                    setTimeout(function () {
+                        inst.dpDiv.css({
+                            top: $(input).offset().top + $(input).outerHeight() + 10,
+                            zIndex: 9999
+                        });
+                    }, 0);
+                }
             });
+
+            // Add click event to the date picker icon to open the datepicker
+            $(".form-date-picker i").click(function() {
+                $(this).siblings("input").focus();
+            });
+
+            // Current date helper function
+            function getCurrentFormattedDate() {
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const year = today.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+
+            // Set default date for ngayNop
+            $("#ngayNop").val(getCurrentFormattedDate());
             
             // Payment method selection
             $(".payment-method").click(function() {
@@ -457,7 +676,7 @@
             // Cancel button handler
             $("#btnCancel").click(function() {
                 if (confirm("Bạn có chắc muốn hủy bỏ việc thu phí này?")) {
-                    window.location.href = "/khoan-thu";
+                    window.location.href = "/admin/dashboard";
                 }
             });
             
@@ -466,7 +685,7 @@
                 let isValid = true;
                 
                 // Validate tên khoản thu
-                const tenKhoanThu = $("#tenKhoanThu").val().trim();
+                const tenKhoanThu = $("#tenKhoanThu").val();
                 if (!tenKhoanThu) {
                     alert("Vui lòng chọn khoản thu");
                     $("#tenKhoanThu").focus();
@@ -478,6 +697,14 @@
                 if (!tenNguoiNop) {
                     alert("Vui lòng nhập tên người nộp");
                     $("#tenNguoiNop").focus();
+                    isValid = false;
+                }
+                
+                // Validate căn hộ
+                const canHo = $("#canHo").val().trim();
+                if (!canHo) {
+                    alert("Vui lòng nhập mã căn hộ");
+                    $("#canHo").focus();
                     isValid = false;
                 }
                 
