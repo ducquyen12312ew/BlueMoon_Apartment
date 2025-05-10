@@ -167,11 +167,11 @@ app.get("/admin/dashboard", ensureAuthenticated, ensureAdmin, async (req, res) =
 // List all khoản thu
 app.get("/khoan-thu", ensureAuthenticated, ensureAdmin, async (req, res) => {
     try {
-        const khoanThuList = await KhoanThuCollection.find().sort({ createdAt: -1 });
-        res.render("list-khoan-thu", { khoanThuList });
+        // Instead of trying to render list-khoan-thu, redirect to the create form
+        res.redirect("/khoan-thu/create");
     } catch (error) {
-        console.error("Error loading khoản thu list:", error);
-        res.status(500).send("Error loading khoản thu list");
+        console.error("Error redirecting to create khoản thu:", error);
+        res.status(500).send("Error processing your request");
     }
 });
 
@@ -180,7 +180,6 @@ app.get("/khoan-thu/create", ensureAuthenticated, ensureAdmin, (req, res) => {
     res.render("create-khoan-thu");
 });
 
-// Create khoản thu process
 app.post("/khoan-thu/create", ensureAuthenticated, ensureAdmin, async (req, res) => {
     try {
         const { maKhoanThu, tenKhoanThu, soTien, loaiKhoanThu, ngayTao, hanThanhToan, moTa } = req.body;
@@ -202,14 +201,45 @@ app.post("/khoan-thu/create", ensureAuthenticated, ensureAdmin, async (req, res)
             });
         }
         
-        // Create new khoản thu
+        // Parse date strings properly
+        // For ngayTao: Use current date if not provided or invalid
+        let parsedNgayTao = new Date();
+        if (ngayTao) {
+            // Check if the date is in dd/mm/yyyy format
+            if (ngayTao.includes('/')) {
+                const [day, month, year] = ngayTao.split('/');
+                parsedNgayTao = new Date(year, month - 1, day); // month is 0-indexed in JS
+            } else {
+                // Try direct parsing
+                const dateAttempt = new Date(ngayTao);
+                if (!isNaN(dateAttempt.getTime())) {
+                    parsedNgayTao = dateAttempt;
+                }
+            }
+        }
+        
+        // For hanThanhToan: Similar parsing logic
+        let parsedHanThanhToan = null;
+        if (hanThanhToan) {
+            if (hanThanhToan.includes('/')) {
+                const [day, month, year] = hanThanhToan.split('/');
+                parsedHanThanhToan = new Date(year, month - 1, day);
+            } else {
+                const dateAttempt = new Date(hanThanhToan);
+                if (!isNaN(dateAttempt.getTime())) {
+                    parsedHanThanhToan = dateAttempt;
+                }
+            }
+        }
+        
+        // Create new khoản thu with properly parsed dates
         const newKhoanThu = new KhoanThuCollection({
             maKhoanThu,
             tenKhoanThu,
             soTien: parseFloat(soTien),
             loaiKhoanThu: parseInt(loaiKhoanThu || 0),
-            ngayTao: ngayTao || new Date(),
-            hanThanhToan: hanThanhToan || null,
+            ngayTao: parsedNgayTao,
+            hanThanhToan: parsedHanThanhToan,
             moTa: moTa || ""
         });
         
@@ -219,18 +249,17 @@ app.post("/khoan-thu/create", ensureAuthenticated, ensureAdmin, async (req, res)
     } catch (error) {
         console.error("Error creating khoản thu:", error);
         res.render("create-khoan-thu", { 
-            error: "Lỗi khi tạo khoản thu",
+            error: "Lỗi khi tạo khoản thu: " + error.message,
             formData: req.body
         });
     }
 });
 
 // Thu phí routes
-// Create thu phí form
 app.get("/thu-phi", ensureAuthenticated, ensureAdmin, async (req, res) => {
     try {
-        // Get list of khoản thu for dropdown
-        const khoanThuList = await KhoanThuCollection.find({ hanThanhToan: { $gte: new Date() } }).sort({ ngayTao: -1 });
+        // Get all khoản thu for dropdown, sorted by newest first
+        const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
         
         res.render("thu-phi", { khoanThuList });
     } catch (error) {
@@ -239,25 +268,30 @@ app.get("/thu-phi", ensureAuthenticated, ensureAdmin, async (req, res) => {
     }
 });
 
-// Create thu phí process
 app.post("/thu-phi/create", ensureAuthenticated, ensureAdmin, async (req, res) => {
     try {
         const { tenKhoanThu, tenNguoiNop, ngayNop, paymentMethod } = req.body;
         
         // Validate inputs
         if (!tenKhoanThu || !tenNguoiNop || !ngayNop) {
+            // Get khoản thu list for re-rendering the form
+            const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
+            
             return res.render("thu-phi", { 
                 error: "Vui lòng điền đầy đủ thông tin bắt buộc",
-                formData: req.body
+                formData: req.body,
+                khoanThuList
             });
         }
         
         // Get the khoản thu details
         const khoanThu = await KhoanThuCollection.findById(tenKhoanThu);
         if (!khoanThu) {
+            const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
             return res.render("thu-phi", { 
                 error: "Không tìm thấy khoản thu",
-                formData: req.body
+                formData: req.body,
+                khoanThuList
             });
         }
         
@@ -268,9 +302,11 @@ app.post("/thu-phi/create", ensureAuthenticated, ensureAdmin, async (req, res) =
         });
         
         if (existingPayment) {
+            const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
             return res.render("thu-phi", { 
                 error: "Người này đã từng nộp khoản phí này!",
-                formData: req.body
+                formData: req.body,
+                khoanThuList
             });
         }
         
@@ -289,9 +325,11 @@ app.post("/thu-phi/create", ensureAuthenticated, ensureAdmin, async (req, res) =
         res.redirect("/thong-ke");
     } catch (error) {
         console.error("Error processing payment:", error);
+        const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
         res.render("thu-phi", { 
             error: "Lỗi khi xử lý thu phí",
-            formData: req.body
+            formData: req.body,
+            khoanThuList
         });
     }
 });

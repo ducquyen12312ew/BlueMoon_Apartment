@@ -373,38 +373,6 @@ async function createSampleData() {
         if (khoanThuExist === 0) {
             // Create some sample khoản thu
             const khoanThuList = [
-                {
-                    maKhoanThu: 'QLTH08',
-                    tenKhoanThu: 'Phí quản lý tháng 8/2023',
-                    soTien: 500000,
-                    loaiKhoanThu: 0, // Bắt buộc
-                    ngayTao: new Date(2023, 7, 1), // Tháng 8
-                    hanThanhToan: new Date(2023, 7, 31)
-                },
-                {
-                    maKhoanThu: 'VSTH08',
-                    tenKhoanThu: 'Phí vệ sinh tháng 8/2023',
-                    soTien: 200000,
-                    loaiKhoanThu: 0,
-                    ngayTao: new Date(2023, 7, 1),
-                    hanThanhToan: new Date(2023, 7, 31)
-                },
-                {
-                    maKhoanThu: 'XETH08',
-                    tenKhoanThu: 'Phí gửi xe tháng 8/2023',
-                    soTien: 100000,
-                    loaiKhoanThu: 0,
-                    ngayTao: new Date(2023, 7, 1),
-                    hanThanhToan: new Date(2023, 7, 31)
-                },
-                {
-                    maKhoanThu: 'QUYKHQ3',
-                    tenKhoanThu: 'Ủng hộ quỹ khuyến học Q3/2023',
-                    soTien: 50000,
-                    loaiKhoanThu: 1, // Đóng góp tự nguyện
-                    ngayTao: new Date(2023, 6, 15),
-                    hanThanhToan: new Date(2023, 8, 30)
-                }
             ];
             await KhoanThuCollection.insertMany(khoanThuList);
             console.log('Sample khoan thu created');
