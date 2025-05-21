@@ -1015,6 +1015,217 @@ app.get("/toquan/biendoi", ensureAuthenticated, ensureToQuan, async (req, res) =
         res.status(500).send("Error loading population changes: " + error.message);
     }
 });
+
+// Thêm route cho trang hộ khẩu-nhân khẩu
+// Thêm các routes sau vào file src/index.js
+
+// Route cho trang hộ khẩu-nhân khẩu
+app.get("/toquan/hokhau-nhankhau", ensureAuthenticated, ensureToQuan, async (req, res) => {
+    try {
+        // Lấy tổng số hộ khẩu và nhân khẩu để hiển thị ở trang
+        const totalHoKhau = await HoKhauCollection.countDocuments();
+        const totalNhanKhau = await NhanKhauCollection.countDocuments();
+        
+        res.render("hokhau-nhankhau", {
+            totalHoKhau,
+            totalNhanKhau
+        });
+    } catch (error) {
+        console.error("Error loading household management:", error);
+        res.status(500).send("Error loading page: " + error.message);
+    }
+});
+
+// Route trang thêm hộ khẩu
+app.get("/toquan/hokhau/add", ensureAuthenticated, ensureToQuan, (req, res) => {
+    res.render("add-hokhau");
+});
+
+// Route xử lý thêm hộ khẩu
+app.post("/toquan/hokhau/add", ensureAuthenticated, ensureToQuan, async (req, res) => {
+    try {
+        const { soHoKhau, hoTenChuHo, diaChi, ngayLamHoKhau, khuVuc, ghiChu } = req.body;
+        
+        // Validate inputs
+        if (!soHoKhau || !hoTenChuHo || !diaChi) {
+            return res.render("add-hokhau", { 
+                error: "Vui lòng điền đầy đủ thông tin bắt buộc",
+                formData: req.body
+            });
+        }
+        
+        // Kiểm tra số hộ khẩu đã tồn tại chưa
+        const existingHoKhau = await HoKhauCollection.findOne({ soHoKhau });
+        if (existingHoKhau) {
+            return res.render("add-hokhau", { 
+                error: "Số hộ khẩu đã tồn tại",
+                formData: req.body
+            });
+        }
+        
+        // Xử lý ngày nếu nhập vào định dạng dd/mm/yyyy
+        let parsedDate = new Date();
+        if (ngayLamHoKhau) {
+            if (ngayLamHoKhau.includes('/')) {
+                const [day, month, year] = ngayLamHoKhau.split('/');
+                parsedDate = new Date(year, month - 1, day);
+            } else {
+                const dateAttempt = new Date(ngayLamHoKhau);
+                if (!isNaN(dateAttempt.getTime())) {
+                    parsedDate = dateAttempt;
+                }
+            }
+        }
+        
+        // Tạo hộ khẩu mới
+        const newHoKhau = new HoKhauCollection({
+            soHoKhau,
+            hoTenChuHo,
+            diaChi,
+            ngayLamHoKhau: parsedDate,
+            ghiChu: ghiChu || ""
+        });
+        
+        await newHoKhau.save();
+        
+        // Ghi lại biến đổi nhân khẩu
+        const bienDoi = new BienDoiNhanKhauCollection({
+            hoKhau: newHoKhau._id,
+            loaiThayDoi: 'Thêm mới',
+            ngayThayDoi: new Date(),
+            noiDung: `Thêm mới hộ khẩu số ${soHoKhau}`,
+            nguoiThucHien: req.session.name
+        });
+        await bienDoi.save();
+        
+        // Redirect to the newly created household
+        res.redirect("/toquan/hokhau-nhankhau");
+    } catch (error) {
+        console.error("Error adding household:", error);
+        res.render("add-hokhau", { 
+            error: "Lỗi khi thêm hộ khẩu: " + error.message,
+            formData: req.body
+        });
+    }
+});
+
+// Route trang thêm nhân khẩu
+app.get("/toquan/nhankhau/add", ensureAuthenticated, ensureToQuan, async (req, res) => {
+    try {
+        // Lấy danh sách hộ khẩu cho dropdown
+        const hokhauList = await HoKhauCollection.find().sort({ soHoKhau: 1 });
+        res.render("add-nhankhau", { hokhauList });
+    } catch (error) {
+        console.error("Error loading add form:", error);
+        res.status(500).send("Error loading form: " + error.message);
+    }
+});
+
+// Route xử lý thêm nhân khẩu
+app.post("/toquan/nhankhau/add", ensureAuthenticated, ensureToQuan, async (req, res) => {
+    try {
+        const { 
+            hoTen, biDanh, ngaySinh, gioiTinh, noiSinh, nguyenQuan, 
+            danToc, tonGiao, ngheNghiep, noiLamViec, cccd, ngayCap, 
+            noiCap, hoKhau, quanHeVoiChuHo, ngayDangKyThuongTru, diaChiTruoc, ghiChu 
+        } = req.body;
+        
+        // Lấy danh sách hộ khẩu cho form (trong trường hợp xảy ra lỗi)
+        const hokhauList = await HoKhauCollection.find().sort({ soHoKhau: 1 });
+        
+        // Validate inputs
+        if (!hoTen || !ngaySinh || !gioiTinh || !hoKhau || !quanHeVoiChuHo) {
+            return res.render("add-nhankhau", { 
+                error: "Vui lòng nhập đầy đủ thông tin bắt buộc",
+                formData: req.body,
+                hokhauList
+            });
+        }
+        
+        // Xử lý ngày sinh, ngày cấp, ngày đăng ký thường trú
+        let parsedNgaySinh = null;
+        if (ngaySinh) {
+            if (ngaySinh.includes('/')) {
+                const [day, month, year] = ngaySinh.split('/');
+                parsedNgaySinh = new Date(year, month - 1, day);
+            } else {
+                parsedNgaySinh = new Date(ngaySinh);
+            }
+        }
+        
+        let parsedNgayCap = null;
+        if (ngayCap) {
+            if (ngayCap.includes('/')) {
+                const [day, month, year] = ngayCap.split('/');
+                parsedNgayCap = new Date(year, month - 1, day);
+            } else {
+                parsedNgayCap = new Date(ngayCap);
+            }
+        }
+        
+        let parsedNgayDangKyThuongTru = new Date();
+        if (ngayDangKyThuongTru) {
+            if (ngayDangKyThuongTru.includes('/')) {
+                const [day, month, year] = ngayDangKyThuongTru.split('/');
+                parsedNgayDangKyThuongTru = new Date(year, month - 1, day);
+            } else {
+                const dateAttempt = new Date(ngayDangKyThuongTru);
+                if (!isNaN(dateAttempt.getTime())) {
+                    parsedNgayDangKyThuongTru = dateAttempt;
+                }
+            }
+        }
+        
+        // Tạo nhân khẩu mới
+        const newNhanKhau = new NhanKhauCollection({
+            hoTen,
+            biDanh: biDanh || "",
+            ngaySinh: parsedNgaySinh,
+            gioiTinh,
+            noiSinh: noiSinh || "",
+            nguyenQuan: nguyenQuan || "",
+            danToc: danToc || "Kinh",
+            tonGiao: tonGiao || "Không",
+            ngheNghiep: ngheNghiep || "",
+            noiLamViec: noiLamViec || "",
+            cccd: cccd || "",
+            ngayCap: parsedNgayCap,
+            noiCap: noiCap || "",
+            hoKhau,
+            quanHeVoiChuHo,
+            ngayDangKyThuongTru: parsedNgayDangKyThuongTru,
+            diaChiTruoc: diaChiTruoc || "",
+            ghiChu: ghiChu || ""
+        });
+        
+        await newNhanKhau.save();
+        
+        // Lấy thông tin hộ khẩu
+        const hokhauInfo = await HoKhauCollection.findById(hoKhau);
+        
+        // Ghi lại biến đổi nhân khẩu
+        const bienDoi = new BienDoiNhanKhauCollection({
+            nhanKhau: newNhanKhau._id,
+            hoKhau: hoKhau,
+            loaiThayDoi: 'Thêm mới',
+            ngayThayDoi: new Date(),
+            noiDung: `Thêm mới nhân khẩu ${hoTen} vào hộ khẩu số ${hokhauInfo.soHoKhau}`,
+            nguoiThucHien: req.session.name
+        });
+        await bienDoi.save();
+        
+        res.redirect("/toquan/hokhau-nhankhau");
+    } catch (error) {
+        console.error("Error adding resident:", error);
+        const hokhauList = await HoKhauCollection.find().sort({ soHoKhau: 1 });
+        res.render("add-nhankhau", { 
+            error: "Lỗi khi thêm nhân khẩu: " + error.message,
+            formData: req.body,
+            hokhauList
+        });
+    }
+});
+
 // Middleware functions to ensure authentication and role permissions
 function ensureAuthenticated(req, res, next) {
     if (req.session.userId) {

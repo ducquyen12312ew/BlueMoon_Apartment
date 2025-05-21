@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm Nhân Khẩu Mới - BlueMoon</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        :root {
+            --primary-color: #2a9d8f;
+            --secondary-color: #264653;
+            --light-color: #e9c46a;
+            --accent-color: #f4a261;
+            --dark-color: #e76f51;
+            --sidebar-width: 250px;
+            --border-radius: 12px;
+            --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            --transition-speed: 0.3s;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fc;
+            color: #333;
+        }
+        
+        /* Enhanced Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--secondary-color) 0%, #1d3a47 100%);
+            position: fixed;
+            left: 0;
+            top: 0;
+            color: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            transition: width var(--transition-speed);
+        }
+        
+        .sidebar-header {
+            padding: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            letter-spacing: 1px;
+        }
+        
+        .sidebar-menu {
+            padding: 25px 0;
+            overflow-y: auto;
+            max-height: calc(100vh - 180px);
+        }
+        
+        .menu-item {
+            padding: 16px 25px;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            display: flex;
+            align-items: center;
+            font-size: 17px;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.85);
+            border-left: 3px solid transparent;
+        }
+        
+        .menu-item:hover {
+            background-color: rgba(42, 157, 143, 0.2);
+            color: white;
+            transform: translateX(3px);
+        }
+        
+        .menu-item.active {
+            background: linear-gradient(90deg, rgba(42, 157, 143, 0.2) 0%, rgba(42, 157, 143, 0) 100%);
+            border-left: 3px solid var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .menu-item i {
+            margin-right: 15px;
+            width: 24px;
+            text-align: center;
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            padding: 16px 25px;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            display: flex;
+            align-items: center;
+            font-size: 17px;
+            color: rgba(255, 255, 255, 0.85);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .logout-btn:hover {
+            background-color: rgba(231, 111, 81, 0.2);
+            color: white;
+        }
+        
+        .logout-btn i {
+            margin-right: 15px;
+            font-size: 18px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 25px;
+            transition: margin var(--transition-speed);
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .page-title {
+            font-size: 26px;
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .page-title i {
+            margin-right: 12px;
+            font-size: 28px;
+            color: var(--primary-color);
+        }
+        
+        .page-subtitle {
+            color: #6c757d;
+            font-size: 15px;
+            margin-bottom: 0;
+        }
+        
+        /* Form Styling */
+        .form-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .form-card-header {
+            padding: 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        .form-card-body {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(42, 157, 143, 0.25);
+            outline: none;
+        }
+        
+        .input-group {
+            position: relative;
+        }
+        
+        .input-group .form-control {
+            padding-right: 40px;
+        }
+        
+        .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            pointer-events: none;
+        }
+        
+        .input-datepicker {
+            position: relative;
+        }
+        
+        .input-datepicker .form-control {
+            padding-right: 40px;
+            background-color: white;
+        }
+        
+        .input-datepicker i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            cursor: pointer;
+        }
+        
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .required-label::after {
+            content: ' *';
+            color: var(--dark-color);
+        }
+        
+        /* Form Sections */
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-section-title {
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+        }
+        
+        .form-section-title i {
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+        
+        /* Action Buttons */
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 15px;
+            transition: all 0.2s;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #248a7c;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e9ecef;
+        }
+        
+        /* Alert Messages */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .alert-success {
+            background-color: rgba(42, 157, 143, 0.1);
+            border-left: 4px solid var(--primary-color);
+            color: #136055;
+        }
+        
+        .alert-danger {
+            background-color: rgba(231, 111, 81, 0.1);
+            border-left: 4px solid var(--dark-color);
+            color: #c44d29;
+        }
+        
+        .alert-icon {
+            margin-right: 10px;
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .main-content {
+                margin-left: 200px;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .sidebar {
+                width: 70px;
+            }
+            
+            .sidebar-header {
+                font-size: 18px;
+                padding: 15px 0;
+            }
+            
+            .menu-item span,
+            .logout-btn span {
+                display: none;
+            }
+            
+            .menu-item i,
+            .logout-btn i {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+                padding: 15px;
+            }
+            
+            .form-card-body {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            BLUEMOON
+        </div>
+        <div class="sidebar-menu">
+            <a href="/toquan/dashboard" class="menu-item">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Trang chủ</span>
+            </a>
+            <a href="/toquan/hokhau-nhankhau" class="menu-item active">
+                <i class="fas fa-house-user"></i>
+                <span>Quản lý hộ khẩu</span>
+            </a>
+            <a href="/toquan/tamtrutamvang" class="menu-item">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Tạm trú tạm vắng</span>
+            </a>
+            <a href="/toquan/thongke" class="menu-item">
+                <i class="fas fa-chart-bar"></i>
+                <span>Thống kê</span>
+            </a>
+            <a href="/toquan/truyvan" class="menu-item">
+                <i class="fas fa-search"></i>
+                <span>Truy vấn</span>
+            </a>
+            <a href="/toquan/biendoi" class="menu-item">
+                <i class="fas fa-history"></i>
+                <span>Biến đổi nhân khẩu</span>
+            </a>
+        </div>
+        <div class="logout-btn">
+            <a href="/logout" style="color: inherit; text-decoration: none; display: flex; align-items: center; width: 100%;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>ĐĂNG XUẤT</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-user-plus"></i>
+                Thêm Nhân Khẩu Mới
+            </h1>
+            <p class="page-subtitle">Nhập thông tin để đăng ký nhân khẩu mới trong hệ thống</p>
+        </div>
+        
+        <!-- Alert Message (hiển thị nếu có lỗi hoặc thành công) -->
+        <% if (typeof error !== 'undefined') { %>
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle alert-icon"></i>
+            <%= error %>
+        </div>
+        <% } %>
+        
+        <% if (typeof success !== 'undefined') { %>
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle alert-icon"></i>
+            <%= success %>
+        </div>
+        <% } %>
+        
+        <!-- Form Card -->
+        <div class="form-card">
+            <div class="form-card-header">
+                Thông tin nhân khẩu
+            </div>
+            <div class="form-card-body">
+                <form action="/toquan/nhankhau/add" method="POST" id="addNhanKhauForm">
+                    <!-- Thông tin cá nhân -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="fas fa-user"></i> Thông tin cá nhân
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="hoTen" class="form-label required-label">Họ và tên</label>
+                                    <div class="input-group">
+                                        <input type="text" id="hoTen" name="hoTen" class="form-control" placeholder="Nhập họ và tên" required
+                                            value="<%= typeof formData !== 'undefined' ? formData.hoTen || '' : '' %>">
+                                        <div class="input-icon">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="biDanh" class="form-label">Bí danh (nếu có)</label>
+                                    <div class="input-group">
+                                        <input type="text" id="biDanh" name="biDanh" class="form-control" placeholder="Nhập bí danh nếu có"
+                                            value="<%= typeof formData !== 'undefined' ? formData.biDanh || '' : '' %>">
+                                        <div class="input-icon">
+                                            <i class="fas fa-user-tag"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="ngaySinh" class="form-label required-label">Ngày sinh</label>
+                                    <div class="input-datepicker">
+                                        <input type="text" id="ngaySinh" name="ngaySinh" class="form-control" placeholder="dd/mm/yyyy" required
+                                            value="<%= typeof formData !== 'undefined' ? formData.ngaySinh || '' : '' %>">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="gioiTinh" class="form-label required-label">Giới tính</label>
+                                    <select id="gioiTinh" name="gioiTinh" class="form-control" required>
+                                        <option value="">-- Chọn giới tính --</option>
+                                        <option value="Nam" <%= typeof formData !== 'undefined' && formData.gioiTinh === 'Nam' ? 'selected' : '' %>>Nam</option>
+                                        <option value="Nữ" <%= typeof formData !== 'undefined' && formData.gioiTinh === 'Nữ' ? 'selected' : '' %>>Nữ</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="noiSinh" class="form-label">Nơi sinh</label>
+                                    <div class="input-group">
+                                        <input type="text" id="noiSinh" name="noiSinh" class="form-control" placeholder="Nhập nơi sinh"
+                                            value="<%= typeof formData !== 'undefined' ? formData.noiSinh || '' : '' %>">
+                                        <div class="input-icon">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="danToc" class="form-label">Dân tộc</label>
+                                    <div class="input-group">
+                                        <input type="text" id="danToc" name="danToc" class="form-control" placeholder="Ví dụ: Kinh"
+                                            value="<%= typeof formData !== 'undefined' ? formData.danToc || '' : 'Kinh' %>">
+                                        <div class="input-icon">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="tonGiao" class="form-label">Tôn giáo</label>
+                                    <div class="input-group">
+                                        <input type="text" id="tonGiao" name="tonGiao" class="form-control" placeholder="Ví dụ: Không"
+                                            value="<%= typeof formData !== 'undefined' ? formData.tonGiao || '' : 'Không' %>">
+                                        <div class="input-icon">
+                                            <i class="fas fa-pray"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="nguyenQuan" class="form-label">Nguyên quán</label>
+                                    <div class="input-group">
+                                        <input type="text" id="nguyenQuan" name="nguyenQuan" class="form-control" placeholder="Nhập nguyên quán"
+                                            value="<%= typeof formData !== 'undefined' ? formData.nguyenQuan || '' : '' %>">
+                                        <div class="input-icon">
+                                            <i class="fas fa-home"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Thông tin công việc và CCCD -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="fas fa-id-card"></i> Thông tin công việc và căn cước công dân
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="ngheNghiep" class="form-label">Nghề nghiệp</label>
+                                    <div class="input-group">
+                                        <input type="text" id="ngheNghiep" name="ngheNghiep" class="form-control" placeholder="Nhập nghề nghiệp"
+                                            value="<%= typeof formData !== 'undefined' ? formData.ngheNghiep || '' : '' %>">
+                                        <div class="input-icon">
+                                            <i class="fas fa-briefcase"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="noiLamViec" class="form-label">Nơi làm việc</label>
+                                    <div class="input-group">
+                                        <input type="text" id="noiLamViec" name="noiLamViec" class="form-control" placeholder="Nhập nơi làm việc"
+                                            value="<%= typeof formData !== 'undefined' ? formData.noiLamViec || '' : '' %>">
+                                        <div class="input-icon">
+                                            <i class="fas fa-building"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="cccd" class="form-label">Số CCCD/CMND</label>
+                                    <div class="input-group">
+                                        <input type="text" id="cccd" name="cccd" class="form-control" placeholder="Nhập số CCCD/CMND"
+                                            value="<%= typeof formData !== 'undefined' ? formData.cccd || '' : '' %>">
+                                        <div class="input-icon">
+                                            <i class="fas fa-id-card"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="ngayCap" class="form-label">Ngày cấp</label>
+                                    <div class="input-datepicker">
+                                        <input type="text" id="ngayCap" name="ngayCap" class="form-control" placeholder="dd/mm/yyyy"
+                                            value="<%= typeof formData !== 'undefined' ? formData.ngayCap || '' : '' %>">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="noiCap" class="form-label">Nơi cấp</label>
+                                    <div class="input-group">
+                                        <input type="text" id="noiCap" name="noiCap" class="form-control" placeholder="Ví dụ: Cục Cảnh sát ĐKQL cư trú"
+                                            value="<%= typeof formData !== 'undefined' ? formData.noiCap || '' : '' %>">
+                                        <div class="input-icon">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Thông tin hộ khẩu -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="fas fa-house-user"></i> Thông tin hộ khẩu
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="hoKhau" class="form-label required-label">Hộ khẩu</label>
+                                    <select id="hoKhau" name="hoKhau" class="form-control" required>
+                                        <option value="">-- Chọn hộ khẩu --</option>
+                                        <% if (hokhauList && hokhauList.length > 0) { %>
+                                            <% hokhauList.forEach(function(hokhau) { %>
+                                                <option value="<%= hokhau._id %>" <%= typeof formData !== 'undefined' && formData.hoKhau === hokhau._id.toString() ? 'selected' : '' %>>
+                                                    <%= hokhau.soHoKhau %> - <%= hokhau.hoTenChuHo %> - <%= hokhau.diaChi %>
+                                                </option>
+                                            <% }); %>
+                                        <% } %>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="quanHeVoiChuHo" class="form-label required-label">Quan hệ với chủ hộ</label>
+                                    <select id="quanHeVoiChuHo" name="quanHeVoiChuHo" class="form-control" required>
+                                        <option value="">-- Chọn quan hệ --</option>
+                                        <option value="Chủ hộ" <%= typeof formData !== 'undefined' && formData.quanHeVoiChuHo === 'Chủ hộ' ? 'selected' : '' %>>Chủ hộ</option>
+                                        <option value="Vợ" <%= typeof formData !== 'undefined' && formData.quanHeVoiChuHo === 'Vợ' ? 'selected' : '' %>>Vợ</option>
+                                        <option value="Chồng" <%= typeof formData !== 'undefined' && formData.quanHeVoiChuHo === 'Chồng' ? 'selected' : '' %>>Chồng</option>
+                                        <option value="Con trai" <%= typeof formData !== 'undefined' && formData.quanHeVoiChuHo === 'Con trai' ? 'selected' : '' %>>Con trai</option>
+                                        <option value="Con gái" <%= typeof formData !== 'undefined' && formData.quanHeVoiChuHo === 'Con gái' ? 'selected' : '' %>>Con gái</option>
+                                        <option value="Bố" <%= typeof formData !== 'undefined' && formData.quanHeVoiChuHo === 'Bố' ? 'selected' : '' %>>Bố</option>
+                                        <option value="Mẹ" <%= typeof formData !== 'undefined' && formData.quanHeVoiChuHo === 'Mẹ' ? 'selected' : '' %>>Mẹ</option>
+                                        <option value="Ông" <%= typeof formData !== 'undefined' && formData.quanHeVoiChuHo === 'Ông' ? 'selected' : '' %>>Ông</option>
+                                        <option value="Bà" <%= typeof formData !== 'undefined' && formData.quanHeVoiChuHo === 'Bà' ? 'selected' : '' %>>Bà</option>
+                                        <option value="Cháu trai" <%= typeof formData !== 'undefined' && formData.quanHeVoiChuHo === 'Cháu trai' ? 'selected' : '' %>>Cháu trai</option>
+                                        <option value="Cháu gái" <%= typeof formData !== 'undefined' && formData.quanHeVoiChuHo === 'Cháu gái' ? 'selected' : '' %>>Cháu gái</option>
+                                        <option value="Khác" <%= typeof formData !== 'undefined' && formData.quanHeVoiChuHo === 'Khác' ? 'selected' : '' %>>Khác</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="ngayDangKyThuongTru" class="form-label">Ngày đăng ký thường trú</label>
+                                    <div class="input-datepicker">
+                                        <input type="text" id="ngayDangKyThuongTru" name="ngayDangKyThuongTru" class="form-control" placeholder="dd/mm/yyyy"
+                                            value="<%= typeof formData !== 'undefined' ? formData.ngayDangKyThuongTru || '' : '' %>">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="diaChiTruoc" class="form-label">Địa chỉ trước khi chuyển đến</label>
+                                    <div class="input-group">
+                                        <input type="text" id="diaChiTruoc" name="diaChiTruoc" class="form-control" placeholder="Nhập địa chỉ trước khi chuyển đến"
+                                            value="<%= typeof formData !== 'undefined' ? formData.diaChiTruoc || '' : '' %>">
+                                        <div class="input-icon">
+                                            <i class="fas fa-map-marked-alt"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ghi chú -->
+                    <div class="form-group">
+                        <label for="ghiChu" class="form-label">Ghi chú</label>
+                        <textarea id="ghiChu" name="ghiChu" class="form-control" placeholder="Nhập ghi chú (nếu có)"><%= typeof formData !== 'undefined' ? formData.ghiChu || '' : '' %></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <a href="/toquan/hokhau-nhankhau" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Hủy bỏ
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Lưu nhân khẩu
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize date pickers
+            flatpickr("#ngaySinh", {
+                dateFormat: "d/m/Y",
+                locale: "vn",
+                allowInput: true
+            });
+            
+            flatpickr("#ngayCap", {
+                dateFormat: "d/m/Y",
+                locale: "vn",
+                allowInput: true
+            });
+            
+            flatpickr("#ngayDangKyThuongTru", {
+                dateFormat: "d/m/Y",
+                locale: "vn",
+                defaultDate: new Date(),
+                allowInput: true
+            });
+            
+            // Form validation
+            const addNhanKhauForm = document.getElementById('addNhanKhauForm');
+            addNhanKhauForm.addEventListener('submit', function(event) {
+                let isValid = true;
+                
+                // Validate họ tên
+                const hoTen = document.getElementById('hoTen').value.trim();
+                if (!hoTen) {
+                    alert('Vui lòng nhập họ và tên');
+                    isValid = false;
+                }
+                
+                // Validate ngày sinh
+                const ngaySinh = document.getElementById('ngaySinh').value.trim();
+                if (!ngaySinh) {
+                    alert('Vui lòng nhập ngày sinh');
+                    isValid = false;
+                }
+                
+                // Validate giới tính
+                const gioiTinh = document.getElementById('gioiTinh').value.trim();
+                if (!gioiTinh) {
+                    alert('Vui lòng chọn giới tính');
+                    isValid = false;
+                }
+                
+                // Validate hộ khẩu
+                const hoKhau = document.getElementById('hoKhau').value.trim();
+                if (!hoKhau) {
+                    alert('Vui lòng chọn hộ khẩu');
+                    isValid = false;
+                }
+                
+                // Validate quan hệ với chủ hộ
+                const quanHeVoiChuHo = document.getElementById('quanHeVoiChuHo').value.trim();
+                if (!quanHeVoiChuHo) {
+                    alert('Vui lòng chọn quan hệ với chủ hộ');
+                    isValid = false;
+                }
+                
+                if (!isValid) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

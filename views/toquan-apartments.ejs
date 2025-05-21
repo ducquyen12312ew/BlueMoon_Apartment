@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách căn hộ - BlueMoon</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+    <style>
+        /* Utilice los mismos estilos del dashboard con pequeñas modificaciones */
+        :root {
+            --primary-color: #2a9d8f;
+            --secondary-color: #264653;
+            --light-color: #e9c46a;
+            --accent-color: #f4a261;
+            --danger-color: #e76f51;
+            --sidebar-width: 250px;
+        }
+        
+        /* [Incluir estilos del sidebar y estructura base] */
+        
+        .table-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .table-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .btn-add {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .btn-add:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .table th {
+            font-weight: 600;
+            background-color: #f8f9fc;
+        }
+        
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-occupied {
+            background-color: rgba(42, 157, 143, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .status-vacant {
+            background-color: rgba(233, 196, 106, 0.1);
+            color: var(--light-color);
+        }
+        
+        .status-maintenance {
+            background-color: rgba(244, 162, 97, 0.1);
+            color: var(--accent-color);
+        }
+        
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(38, 70, 83, 0.1);
+            color: var(--secondary-color);
+            border: none;
+            margin-right: 5px;
+            transition: all 0.3s;
+        }
+        
+        .action-btn:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #666;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 0;
+            position: relative;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background-color: transparent;
+            font-weight: 600;
+        }
+        
+        .nav-tabs .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+        
+        .nav-tabs .nav-link:hover {
+            color: var(--primary-color);
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar: Mismo que el dashboard -->
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">Danh sách căn hộ</h1>
+            <p class="page-subtitle">Quản lý thông tin căn hộ và cư dân</p>
+        </div>
+        
+        <ul class="nav nav-tabs mb-4">
+            <li class="nav-item">
+                <a class="nav-link active" id="apartments-tab" data-bs-toggle="tab" href="#apartments">Căn hộ</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="residents-tab" data-bs-toggle="tab" href="#residents">Cư dân</a>
+            </li>
+        </ul>
+        
+        <div class="tab-content">
+            <!-- Apartments Tab -->
+            <div class="tab-pane fade show active" id="apartments">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2 class="table-title">Danh sách căn hộ</h2>
+                        <a href="/toquan/apartments/add" class="btn-add">
+                            <i class="fas fa-plus"></i>
+                            Thêm căn hộ
+                        </a>
+                    </div>
+                    
+                    <table id="apartmentsTable" class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Mã căn hộ</th>
+                                <th>Tòa</th>
+                                <th>Tầng</th>
+                                <th>Loại</th>
+                                <th>Diện tích</th>
+                                <th>Trạng thái</th>
+                                <th>Đã bàn giao</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Loop through apartments -->
+                            <% if (apartments && apartments.length > 0) { %>
+                                <% apartments.forEach(function(apartment) { %>
+                                    <tr>
+                                        <td><%= apartment.apartmentId %></td>
+                                        <td><%= apartment.block %></td>
+                                        <td><%= apartment.floor %></td>
+                                        <td><%= apartment.type %></td>
+                                        <td><%= apartment.area %> m²</td>
+                                        <td>
+                                            <% if (apartment.isOccupied) { %>
+                                                <span class="status-badge status-occupied">Đã cư trú</span>
+                                            <% } else { %>
+                                                <span class="status-badge status-vacant">Chưa cư trú</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (apartment.status === 'Đã bàn giao') { %>
+                                                <%= apartment.handoverDate ? new Date(apartment.handoverDate).toLocaleDateString('vi-VN') : 'Đã bàn giao' %>
+                                            <% } else if (apartment.status === 'Đang sửa chữa') { %>
+                                                <span class="status-badge status-maintenance">Đang sửa chữa</span>
+                                            <% } else { %>
+                                                Chưa bàn giao
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <a href="/toquan/apartments/<%= apartment._id %>" class="action-btn" title="Xem chi tiết">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="/toquan/apartments/<%= apartment._id %>/edit" class="action-btn" title="Chỉnh sửa">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="8" class="text-center">Không có dữ liệu</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Residents Tab -->
+            <div class="tab-pane fade" id="residents">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2 class="table-title">Danh sách cư dân</h2>
+                        <a href="/toquan/residents/add" class="btn-add">
+                            <i class="fas fa-plus"></i>
+                            Thêm cư dân
+                        </a>
+                    </div>
+                    
+                    <table id="residentsTable" class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Họ tên</th>
+                                <th>Căn hộ</th>
+                                <th>Loại cư dân</th>
+                                <th>Giới tính</th>
+                                <th>Số điện thoại</th>
+                                <th>Ngày vào ở</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Residents data will be loaded via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTables
+            $('#apartmentsTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/vi.json'
+                }
+            });
+            
+            // Load residents data when tab is activated
+            $('#residents-tab').on('shown.bs.tab', function(e) {
+                if (!$.fn.DataTable.isDataTable('#residentsTable')) {
+                    $('#residentsTable').DataTable({
+                        language: {
+                            url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/vi.json'
+                        },
+                        ajax: {
+                            url: '/toquan/api/residents',
+                            dataSrc: ''
+                        },
+                        columns: [
+                            { data: 'fullName' },
+                            { data: 'apartmentId' },
+                            { data: 'residentType' },
+                            { data: 'gender' },
+                            { data: 'phone' },
+                            { 
+                                data: 'moveInDate',
+                                render: function(data) {
+                                    return new Date(data).toLocaleDateString('vi-VN');
+                                }
+                            },
+                            { 
+                                data: 'isActive',
+                                render: function(data) {
+                                    return data ? 
+                                        '<span class="status-badge status-occupied">Đang cư trú</span>' : 
+                                        '<span class="status-badge status-vacant">Đã chuyển đi</span>';
+                                }
+                            },
+                            {
+                                data: '_id',
+                                render: function(data) {
+                                    return `
+                                        <a href="/toquan/residents/${data}" class="action-btn" title="Xem chi tiết">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="/toquan/residents/${data}/edit" class="action-btn" title="Chỉnh sửa">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    `;
+                                }
+                            }
+                        ]
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
