@@ -309,7 +309,182 @@ const NopTienSchema = new mongoose.Schema({
     }
 });
 
-// Create models from schemas
+// HoKhau Schema (Household) - Moved to module level
+const HoKhauSchema = new mongoose.Schema({
+    soHoKhau: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    hoTenChuHo: {
+        type: String,
+        required: true
+    },
+    diaChi: {
+        type: String,
+        required: true
+    },
+    ngayLamHoKhau: {
+        type: Date,
+        default: Date.now
+    },
+    ghiChu: {
+        type: String
+    }
+});
+
+// NhanKhau Schema (Resident) - Moved to module level
+const NhanKhauSchema = new mongoose.Schema({
+    hoTen: {
+        type: String,
+        required: true
+    },
+    biDanh: {
+        type: String
+    },
+    ngaySinh: {
+        type: Date,
+        required: true
+    },
+    gioiTinh: {
+        type: String,
+        enum: ['Nam', 'Nữ'],
+        required: true
+    },
+    noiSinh: {
+        type: String
+    },
+    nguyenQuan: {
+        type: String
+    },
+    danToc: {
+        type: String
+    },
+    tonGiao: {
+        type: String
+    },
+    ngheNghiep: {
+        type: String
+    },
+    noiLamViec: {
+        type: String
+    },
+    cccd: {
+        type: String
+    },
+    ngayCap: {
+        type: Date
+    },
+    noiCap: {
+        type: String
+    },
+    hoKhau: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'hokhau',
+        required: true
+    },
+    quanHeVoiChuHo: {
+        type: String
+    },
+    ngayDangKyThuongTru: {
+        type: Date
+    },
+    diaChiTruoc: {
+        type: String
+    },
+    ghiChu: {
+        type: String
+    }
+});
+
+// TamTru Schema (Temporary Residence) - Moved to module level
+const TamTruSchema = new mongoose.Schema({
+    nhanKhau: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'nhankhau',
+        required: true
+    },
+    diaChiTamTru: {
+        type: String,
+        required: true
+    },
+    tuNgay: {
+        type: Date,
+        required: true
+    },
+    denNgay: {
+        type: Date,
+        required: true
+    },
+    lyDo: {
+        type: String
+    },
+    trangThai: {
+        type: String,
+        enum: ['Chờ duyệt', 'Đã duyệt', 'Từ chối'],
+        default: 'Chờ duyệt'
+    }
+});
+
+// TamVang Schema (Temporary Absence) - Moved to module level
+const TamVangSchema = new mongoose.Schema({
+    nhanKhau: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'nhankhau',
+        required: true
+    },
+    noiTamTru: {
+        type: String,
+        required: true
+    },
+    tuNgay: {
+        type: Date,
+        required: true
+    },
+    denNgay: {
+        type: Date,
+        required: true
+    },
+    lyDo: {
+        type: String
+    },
+    trangThai: {
+        type: String,
+        enum: ['Chờ duyệt', 'Đã duyệt', 'Từ chối'],
+        default: 'Chờ duyệt'
+    }
+});
+
+// BienDoiNhanKhau Schema (Population Changes) - Moved to module level
+const BienDoiNhanKhauSchema = new mongoose.Schema({
+    nhanKhau: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'nhankhau'
+    },
+    hoKhau: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'hokhau'
+    },
+    loaiThayDoi: {
+        type: String,
+        enum: ['Thêm mới', 'Xóa', 'Chuyển đi', 'Chuyển đến', 'Tạm trú', 'Tạm vắng'],
+        required: true
+    },
+    ngayThayDoi: {
+        type: Date,
+        default: Date.now
+    },
+    noiDung: {
+        type: String,
+        required: true
+    },
+    nguoiThucHien: {
+        type: String,
+        required: true
+    }
+});
+
+// Create models from schemas - All at module level
 const UserCollection = mongoose.model("users", UserSchema);
 const ApartmentCollection = mongoose.model("apartments", ApartmentSchema);
 const ResidentCollection = mongoose.model("residents", ResidentSchema);
@@ -318,6 +493,11 @@ const PaymentCollection = mongoose.model("payments", PaymentSchema);
 const NoticeCollection = mongoose.model("notices", NoticeSchema);
 const KhoanThuCollection = mongoose.model("khoanthus", KhoanThuSchema);
 const NopTienCollection = mongoose.model("noptiens", NopTienSchema);
+const HoKhauCollection = mongoose.model("hokhau", HoKhauSchema);
+const NhanKhauCollection = mongoose.model("nhankhau", NhanKhauSchema);
+const TamTruCollection = mongoose.model("tamtru", TamTruSchema);
+const TamVangCollection = mongoose.model("tamvang", TamVangSchema);
+const BienDoiNhanKhauCollection = mongoose.model("biendoinhankhau", BienDoiNhanKhauSchema);
 
 // Function to create default admin account if none exists
 async function createDefaultAdmin() {
@@ -447,7 +627,7 @@ async function createSampleData() {
     }
 }
 
-// Export models
+// Export models - All models defined above can now be exported
 module.exports = { 
     UserCollection, 
     ApartmentCollection, 
@@ -456,5 +636,10 @@ module.exports = {
     PaymentCollection,
     NoticeCollection,
     KhoanThuCollection,
-    NopTienCollection
+    NopTienCollection,
+    HoKhauCollection,
+    NhanKhauCollection,
+    TamTruCollection,
+    TamVangCollection,
+    BienDoiNhanKhauCollection
 };
