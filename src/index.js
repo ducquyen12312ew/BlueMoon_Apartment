@@ -1823,7 +1823,7 @@ app.get("/toquan/tamvang/:id", ensureAuthenticated, ensureToQuan, async (req, re
 });
 
 
-app.get("/maintenance", ensureAuthenticated, ensureAdmin, async (req, res) => {
+app.get("/toquan/maintenance", ensureAuthenticated, ensureToQuan, async (req, res) => {
     try {
         // Get all apartments for the dropdown in the form
         const apartments = await ApartmentCollection.find().sort({ number: 1 });
@@ -1850,7 +1850,7 @@ app.get("/maintenance", ensureAuthenticated, ensureAdmin, async (req, res) => {
 });
 
 // Create new maintenance request
-app.post("/maintenance/create", ensureAuthenticated, ensureAdmin, async (req, res) => {
+app.post("/toquan/maintenance/create", ensureAuthenticated, ensureToQuan, async (req, res) => {
     try {
         const { apartment, priority, title, description, scheduledDate, assignedTo } = req.body;
         
@@ -1896,7 +1896,7 @@ app.post("/maintenance/create", ensureAuthenticated, ensureAdmin, async (req, re
 });
 
 // Assign staff to maintenance request
-app.post("/maintenance/assign", ensureAuthenticated, ensureAdmin, async (req, res) => {
+app.post("/toquan/maintenance/assign", ensureAuthenticated,ensureToQuan, async (req, res) => {
     try {
         const { requestId, staffMember, scheduledTime, notes } = req.body;
         
