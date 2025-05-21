@@ -88,13 +88,29 @@ app.post("/login", async (req, res) => {
             
             return res.redirect("/admin/dashboard");
         } 
-        else if(username === "toquan" && password === "123456789") {
+        else if(username === "totruong" && password === "123456789") {
             // Tổ trưởng/Tổ phó account
             req.session.name = "toquan";
             req.session.role = "toquan";
             req.session.userId = "3";
             
             return res.redirect("/toquan/dashboard");
+        } 
+        else if(username === "topho" && password === "123456789") {
+            // Tổ trưởng/Tổ phó account
+            req.session.name = "topho";
+            req.session.role = "topho";
+            req.session.userId = "4";
+            
+            return res.redirect("/topho/dashboard");
+        } 
+        else if(username === "cudan1" && password === "123456789") {
+            // Tổ trưởng/Tổ phó account
+            req.session.name = "cudan";
+            req.session.role = "cudan";
+            req.session.userId = "10";
+            
+            return res.redirect("/cudan/dashboard");
         } 
         else {
             return res.render("login", { error: "Tài khoản hoặc mật khẩu không chính xác" });
@@ -1788,7 +1804,82 @@ app.get("/toquan/thongke", ensureAuthenticated, ensureToQuan, async (req, res) =
         res.status(500).send("Error generating statistics: " + error.message);
     }
 });
-
+app.get("/topho/thongke", ensureAuthenticated, ensureToPho, async (req, res) => {
+    try {
+        // Thống kê tổng số
+        const totalHoKhau = await HoKhauCollection.countDocuments();
+        const totalNhanKhau = await NhanKhauCollection.countDocuments();
+        const totalTamTru = await TamTruCollection.countDocuments({ trangThai: 'Đã duyệt' });
+        const totalTamVang = await TamVangCollection.countDocuments({ trangThai: 'Đã duyệt' });
+        
+        // Thống kê giới tính
+        const maleCount = await NhanKhauCollection.countDocuments({ gioiTinh: 'Nam' });
+        const femaleCount = await NhanKhauCollection.countDocuments({ gioiTinh: 'Nữ' });
+        
+        // Thống kê theo độ tuổi
+        const currentYear = new Date().getFullYear();
+        
+        // Dưới 18 tuổi
+        const under18Count = await NhanKhauCollection.countDocuments({
+            ngaySinh: { $gt: new Date(`${currentYear-18}-01-01`) }
+        });
+        
+        // Từ 18 đến 60 tuổi
+        const adult18to60Count = await NhanKhauCollection.countDocuments({
+            ngaySinh: { 
+                $lte: new Date(`${currentYear-18}-01-01`),
+                $gt: new Date(`${currentYear-60}-01-01`)
+            }
+        });
+        
+        // Trên 60 tuổi
+        const over60Count = await NhanKhauCollection.countDocuments({
+            ngaySinh: { $lte: new Date(`${currentYear-60}-01-01`) }
+        });
+        
+        // Biến động nhân khẩu theo tháng
+        const monthLabels = [];
+        const populationChanges = [];
+        
+        // Tính toán cho 6 tháng gần nhất
+        for (let i = 5; i >= 0; i--) {
+            const date = new Date();
+            date.setMonth(date.getMonth() - i);
+            
+            const monthYear = `${date.getMonth()+1}/${date.getFullYear()}`;
+            monthLabels.push(monthYear);
+            
+            const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+            const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+            
+            const changes = await BienDoiNhanKhauCollection.countDocuments({
+                ngayThayDoi: {
+                    $gte: startOfMonth,
+                    $lte: endOfMonth
+                }
+            });
+            
+            populationChanges.push(changes);
+        }
+        
+        res.render("thongke-topho", {
+            totalHoKhau,
+            totalNhanKhau,
+            totalTamTru,
+            totalTamVang,
+            maleCount,
+            femaleCount,
+            under18Count,
+            adult18to60Count,
+            over60Count,
+            monthLabels,
+            populationChanges
+        });
+    } catch (error) {
+        console.error("Error generating statistics:", error);
+        res.status(500).send("Error generating statistics: " + error.message);
+    }
+});
 // Thêm các template mẫu cho trang chi tiết nếu cần
 app.get("/toquan/tamtru/:id", ensureAuthenticated, ensureToQuan, async (req, res) => {
     try {
@@ -1984,6 +2075,44 @@ app.post("/maintenance/update-status", ensureAuthenticated, ensureAdmin, async (
         res.status(500).send("Error updating status");
     }
 });
+app.get("/topho/dashboard", ensureAuthenticated, ensureToPho, async (req, res) => {
+    try {
+        // Lấy số liệu thống kê từ database
+        const totalHoKhau = await HoKhauCollection.countDocuments();
+        const totalNhanKhau = await NhanKhauCollection.countDocuments();
+        const totalTamTru = await TamTruCollection.countDocuments();
+        const totalTamVang = await TamVangCollection.countDocuments();
+        
+        // Thống kê giới tính
+        const maleCount = await NhanKhauCollection.countDocuments({ gioiTinh: 'Nam' });
+        const femaleCount = await NhanKhauCollection.countDocuments({ gioiTinh: 'Nữ' });
+        
+        // Lấy dữ liệu biến đổi nhân khẩu gần đây
+        const recentChanges = await BienDoiNhanKhauCollection.find()
+            .sort({ ngayThayDoi: -1 })
+            .limit(5)
+            .populate('nhanKhau')
+            .populate('hoKhau');
+        
+        // Truy vấn danh sách căn hộ
+        const apartments = await ApartmentCollection.find(); // Thay thế `ApartmentCollection` bằng tên chính xác của collection
+
+        res.render("topho-dashboard", {
+            totalHoKhau,
+            totalNhanKhau,
+            totalTamTru,
+            totalTamVang,
+            maleCount,
+            femaleCount,
+            recentChanges,
+            apartments // Thêm `apartments` vào dữ liệu được truyền vào view
+        });
+    } catch (error) {
+        console.error("Dashboard error:", error);
+        res.status(500).send("Error loading dashboard: " + error.message);
+    }
+});
+
 
 // Helper function to get status text in Vietnamese
 function getStatusText(status) {
@@ -2018,6 +2147,12 @@ function ensureAdmin(req, res, next) {
 
 function ensureToQuan(req, res, next) {
     if (req.session.role === 'toquan') {
+        return next();
+    }
+    res.status(403).send("Access Denied: Team Leader privileges required");
+}
+function ensureToPho(req, res, next) {
+    if (req.session.role === 'topho') {
         return next();
     }
     res.status(403).send("Access Denied: Team Leader privileges required");
