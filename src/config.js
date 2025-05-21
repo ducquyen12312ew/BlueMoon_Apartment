@@ -1,10 +1,5 @@
-/**
- * BlueMoon Apartment Management System
- * Database Configuration and Schema Definitions
- */
 const mongoose = require('mongoose');
 
-// Database connection
 const connect = mongoose.connect("mongodb://0.0.0.0:27017/BlueMoonApartment");
 
 connect.then(() => {
@@ -15,12 +10,6 @@ connect.then(() => {
 .catch((err) => {
     console.log("Database cannot be Connected:", err.message);
 });
-
-//=============================================================================
-// SCHEMA DEFINITIONS
-//=============================================================================
-
-// User Schema - Admin role for apartment management
 const UserSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -150,6 +139,43 @@ const ResidentSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+// Resident Profile Schema (New)
+const ResidentProfileSchema = new mongoose.Schema({
+    userId: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    name: {
+        type: String,
+        required: true
+    },
+    apartment: {
+        type: String,
+        required: true
+    },
+    dateOfBirth: {
+        type: String
+    },
+    phone: {
+        type: String
+    },
+    email: {
+        type: String
+    },
+    idNumber: {
+        type: String
+    },
+    moveInDate: {
+        type: String,
+        default: "01/01/2023"
     },
     updatedAt: {
         type: Date,
@@ -574,7 +600,51 @@ const MaintenanceStaffSchema = new mongoose.Schema({
     skills: [String],
     notes: String
 });
+const FeedbackSchema = new mongoose.Schema({
+    resident: {
+        type: String,
+        required: true
+    },
+    apartment: {
+        type: String,
+        required: true
+    },
+    title: {
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+        required: true
+    },
+    category: {
+        type: String,
+        enum: ['maintenance', 'security', 'neighbor', 'facilities', 'payment', 'other'],
+        default: 'other'
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'in-progress', 'resolved', 'rejected'],
+        default: 'pending'
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
+    },
+    response: {
+        text: String,
+        respondedBy: String,
+        respondedAt: Date
+    },
+    attachments: [String]
+});
 
+// Create model from schema
+const FeedbackCollection = mongoose.model("feedbacks", FeedbackSchema);
 //=============================================================================
 // MODEL CREATION
 //=============================================================================
@@ -583,6 +653,7 @@ const MaintenanceStaffSchema = new mongoose.Schema({
 const UserCollection = mongoose.model("users", UserSchema);
 const ApartmentCollection = mongoose.model("apartments", ApartmentSchema);
 const ResidentCollection = mongoose.model("residents", ResidentSchema);
+const ResidentProfileCollection = mongoose.model("residentprofiles", ResidentProfileSchema);
 const MaintenanceRequestCollection = mongoose.model("maintenanceRequests", MaintenanceRequestSchema);
 const PaymentCollection = mongoose.model("payments", PaymentSchema);
 const NoticeCollection = mongoose.model("notices", NoticeSchema);
@@ -684,6 +755,37 @@ async function createSampleData() {
             }
             await ApartmentCollection.insertMany(apartments);
             console.log('Sample apartments created');
+        }
+
+        // Create sample resident profiles if none exist
+        const residentProfilesExist = await ResidentProfileCollection.countDocuments();
+        if (residentProfilesExist === 0) {
+            // Create some sample resident profiles
+            const residentProfiles = [
+                {
+                    userId: "R001",
+                    name: "Nguyễn Văn Cư Dân",
+                    apartment: "A101",
+                    dateOfBirth: "15/05/1985",
+                    phone: "0912345678",
+                    email: "nguyen.van.cudan@gmail.com",
+                    idNumber: "001234567890",
+                    moveInDate: "01/01/2023"
+                },
+                {
+                    userId: "R002",
+                    name: "Trần Thị Cư Dân",
+                    apartment: "B205",
+                    dateOfBirth: "20/10/1990",
+                    phone: "0923456789",
+                    email: "tran.thi.cudan@gmail.com",
+                    idNumber: "001345678901",
+                    moveInDate: "15/02/2023"
+                }
+            ];
+            
+            await ResidentProfileCollection.insertMany(residentProfiles);
+            console.log('Sample resident profiles created');
         }
 
         // Create sample maintenance requests if none exist
@@ -861,7 +963,7 @@ module.exports = {
     UserCollection, 
     ApartmentCollection, 
     ResidentCollection, 
-    MaintenanceRequestCollection, 
+    ResidentProfileCollection,
     PaymentCollection,
     NoticeCollection,
     KhoanThuCollection,
@@ -871,5 +973,6 @@ module.exports = {
     TamTruCollection,
     TamVangCollection,
     BienDoiNhanKhauCollection,
+    FeedbackCollection,
     MaintenanceStaffCollection
 };

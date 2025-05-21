@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông Tin & Lịch Sử Thanh Toán - BlueMoon</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #333333;
+            --light-color: #555555;
+            --dark-color: #222222;
+            --sidebar-width: 250px;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fc;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--primary-color);
+            position: fixed;
+            left: 0;
+            top: 0;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .sidebar-menu {
+            padding: 25px 0;
+        }
+        
+        .menu-item {
+            padding: 18px 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .menu-item:hover {
+            background-color: var(--dark-color);
+        }
+        
+        .menu-item.active {
+            background-color: var(--dark-color);
+            border-left: 5px solid white;
+        }
+        
+        .menu-item i {
+            margin-right: 15px;
+            width: 24px;
+            text-align: center;
+            font-size: 20px;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            padding: 18px 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+        }
+        
+        .logout-btn:hover {
+            background-color: var(--dark-color);
+        }
+        
+        .logout-btn i {
+            margin-right: 15px;
+            font-size: 20px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        /* Content Card */
+        .content-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-title i {
+            margin-right: 10px;
+        }
+        
+        /* Profile section */
+        .profile-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .profile-image {
+            width: 180px;
+            text-align: center;
+        }
+        
+        .profile-image img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid var(--primary-color);
+        }
+        
+        .profile-details {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .detail-row {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        
+        .detail-label {
+            width: 40%;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .detail-value {
+            width: 60%;
+        }
+        
+        /* Button styles */
+        .btn-profile {
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 14px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .btn-primary-outline {
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            background-color: white;
+        }
+        
+        .btn-primary-outline:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        /* Table styles */
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .custom-table th {
+            background-color: #f8f9fc;
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 2px solid #e3e6f0;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .custom-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e3e6f0;
+        }
+        
+        .custom-table tr:hover {
+            background-color: #f8f9fc;
+        }
+        
+        /* Status badges */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* Alert styles */
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+            border-left-color: #28a745;
+        }
+        
+        /* Button styles */
+        .btn {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: 1px solid var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--dark-color);
+            color: white;
+            border-color: var(--dark-color);
+        }
+        
+        .btn-secondary {
+            background-color: #f8f9fc;
+            color: var(--primary-color);
+            border: 1px solid #ced4da;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e2e6ea;
+        }
+        
+        /* Tabs */
+        .custom-tabs {
+            display: flex;
+            border-bottom: 1px solid #e3e6f0;
+            margin-bottom: 20px;
+        }
+        
+        .tab-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+        }
+        
+        .tab-item.active {
+            border-bottom-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .tab-item:hover {
+            background-color: #f8f9fc;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Receipt */
+        .receipt {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .receipt-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .receipt-subtitle {
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .receipt-body {
+            margin-bottom: 20px;
+        }
+        
+        .receipt-footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .print-btn {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .main-content {
+                margin-left: 200px;
+            }
+            
+            .custom-table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .profile-section {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .profile-image {
+                margin-bottom: 20px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .sidebar {
+                width: 70px;
+            }
+            
+            .sidebar-header {
+                font-size: 20px;
+                padding: 15px 0;
+            }
+            
+            .menu-item span,
+            .logout-btn span {
+                display: none;
+            }
+            
+            .menu-item i,
+            .logout-btn i {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+            
+            .detail-row {
+                flex-direction: column;
+            }
+            
+            .detail-label,
+            .detail-value {
+                width: 100%;
+            }
+            
+            .detail-value {
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            BLUEMOON
+        </div>
+        <div class="sidebar">
+            <div class="sidebar-header">
+                BLUEMOON
+            </div>
+            <div class="sidebar-menu">
+                <a href="/cudan/dashboard" class="menu-item">
+                    <i class="fas fa-home"></i>
+                    <span>Trang chủ</span>
+                </a>
+                <a href="/cudan/khoan-thu" class="menu-item">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Nộp phí</span>
+                </a>
+                <a href="/cudan/feedback" class="menu-item">
+                    <i class="fas fa-comment-alt"></i>
+                    <span>Phản ánh</span>
+                </a>
+                <a href="/cudan/thong-tin" class="menu-item active">
+                    <i class="fas fa-user"></i>
+                    <span>Thông tin cá nhân</span>
+                </a>
+            </div>
+            <div class="logout-btn">
+                <a href="/logout" style="color: white; text-decoration: none; display: flex; align-items: center;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>ĐĂNG XUẤT</span>
+                </a>
+            </div>
+        </div>
+        <div class="logout-btn">
+            <a href="/logout" style="color: white; text-decoration: none; display: flex; align-items: center;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>ĐĂNG XUẤT</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">THÔNG TIN CÁ NHÂN & THANH TOÁN</h1>
+            <p>Quản lý thông tin cá nhân và lịch sử thanh toán</p>
+        </div>
+        
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                <%= success %>
+            </div>
+        <% } %>
+        
+        <% if (typeof profileUpdateSuccess !== 'undefined' && profileUpdateSuccess) { %>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                <%= profileUpdateSuccess %>
+            </div>
+        <% } %>
+        
+        <% if (typeof profileUpdateError !== 'undefined' && profileUpdateError) { %>
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <%= profileUpdateError %>
+            </div>
+        <% } %>
+        
+        <!-- Tabs Navigation -->
+        <div class="custom-tabs">
+            <div class="tab-item active" data-tab="profile">
+                <i class="fas fa-user me-2"></i>Thông tin cá nhân
+            </div>
+            <div class="tab-item" data-tab="payment-history">
+                <i class="fas fa-history me-2"></i>Lịch sử thanh toán
+            </div>
+        </div>
+        
+        <!-- Profile Tab Content -->
+        <div class="tab-content active" id="profile-tab">
+            <div class="content-card">
+                <div class="profile-section">
+                    <div class="profile-image">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=bluemoon">
+                        <a href="#" class="btn-profile btn-primary-outline mt-2">
+                            <i class="fas fa-camera me-1"></i>Đổi ảnh
+                        </a>
+                    </div>
+                    <div class="profile-details">
+                        <div class="detail-row">
+                            <div class="detail-label">Họ và tên:</div>
+                            <div class="detail-value"><strong><%= residentInfo.name %></strong></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Mã căn hộ:</div>
+                            <div class="detail-value"><strong><%= residentInfo.apartment %></strong></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Ngày sinh:</div>
+                            <div class="detail-value"><%= residentInfo.dateOfBirth %></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Số điện thoại:</div>
+                            <div class="detail-value"><%= residentInfo.phone %></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Email:</div>
+                            <div class="detail-value"><%= residentInfo.email %></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">CCCD/CMND:</div>
+                            <div class="detail-value"><%= residentInfo.idNumber %></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Ngày vào ở:</div>
+                            <div class="detail-value"><%= residentInfo.moveInDate %></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Trạng thái:</div>
+                            <div class="detail-value">
+                                <span class="status-badge status-success">Đang cư trú</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateProfileModal">
+                        <i class="fas fa-edit me-1"></i>Cập nhật thông tin
+                    </button>
+                </div>
+                
+                <!-- Update Profile Modal -->
+                <div class="modal fade" id="updateProfileModal" tabindex="-1" aria-labelledby="updateProfileModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="updateProfileModalLabel">Cập nhật thông tin cá nhân</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="updateProfileForm" action="/cudan/capnhat-thongtin" method="POST">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="updateName" class="form-label">Họ và tên</label>
+                                                <input type="text" class="form-control" id="updateName" name="name" value="<%= residentInfo.name %>" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="updateApartment" class="form-label">Mã căn hộ</label>
+                                                <input type="text" class="form-control" id="updateApartment" name="apartment" value="<%= residentInfo.apartment %>" readonly>
+                                                <small class="text-muted">Không thể thay đổi mã căn hộ</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="updateDateOfBirth" class="form-label">Ngày sinh</label>
+                                                <input type="text" class="form-control" id="updateDateOfBirth" name="dateOfBirth" value="<%= residentInfo.dateOfBirth %>">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="updatePhone" class="form-label">Số điện thoại</label>
+                                                <input type="tel" class="form-control" id="updatePhone" name="phone" value="<%= residentInfo.phone %>">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="updateEmail" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="updateEmail" name="email" value="<%= residentInfo.email %>">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="updateIdNumber" class="form-label">CCCD/CMND</label>
+                                                <input type="text" class="form-control" id="updateIdNumber" name="idNumber" value="<%= residentInfo.idNumber %>">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group mb-3">
+                                        <label for="updatePassword" class="form-label">Mật khẩu mới (để trống nếu không đổi)</label>
+                                        <input type="password" class="form-control" id="updatePassword" name="password" placeholder="Nhập mật khẩu mới nếu muốn thay đổi">
+                                    </div>
+                                    
+                                    <div class="form-group mb-3">
+                                        <label for="updatePasswordConfirm" class="form-label">Xác nhận mật khẩu mới</label>
+                                        <input type="password" class="form-control" id="updatePasswordConfirm" name="passwordConfirm" placeholder="Xác nhận mật khẩu mới">
+                                    </div>
+                                    
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                                        <button type="submit" class="btn btn-primary">Lưu thông tin</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payment History Tab Content -->
+        <div class="tab-content" id="payment-history-tab">
+            <div class="content-card">
+                <div class="card-title">
+                    <i class="fas fa-history"></i>
+                    <span>Danh sách các khoản đã thanh toán</span>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Tên khoản thu</th>
+                                <th>Số tiền</th>
+                                <th>Ngày thanh toán</th>
+                                <th>Phương thức</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (payments && payments.length > 0) { %>
+                                <% payments.forEach(function(payment, paymentIndex) { %>
+                                    <tr>
+                                        <td><%= payment.khoanThu ? payment.khoanThu.tenKhoanThu : 'Không xác định' %></td>
+                                        <td><%= payment.soTien.toLocaleString('vi-VN') %> VND</td>
+                                        <td>
+                                            <% 
+                                                const paymentDate = new Date(payment.ngayNop);
+                                                const formattedDay = paymentDate.getDate().toString().padStart(2, '0');
+                                                const formattedMonth = (paymentDate.getMonth() + 1).toString().padStart(2, '0');
+                                                const formattedYear = paymentDate.getFullYear();
+                                            %>
+                                            <%= formattedDay %>/<%= formattedMonth %>/<%= formattedYear %>
+                                        </td>
+                                        <td>
+                                            <% if (payment.phuongThucThanhToan === 'cash') { %>
+                                                <i class="fas fa-money-bill-wave me-1"></i> Tiền mặt
+                                            <% } else if (payment.phuongThucThanhToan === 'bank') { %>
+                                                <i class="fas fa-credit-card me-1"></i> Chuyển khoản
+                                            <% } else if (payment.phuongThucThanhToan === 'qr') { %>
+                                                <i class="fas fa-qrcode me-1"></i> Quét mã QR
+                                            <% } else { %>
+                                                <%= payment.phuongThucThanhToan %>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (payment.trangThai === 'on-time') { %>
+                                                <span class="status-badge status-success">Đúng hạn</span>
+                                            <% } else if (payment.trangThai === 'late') { %>
+                                                <span class="status-badge status-warning">Trễ hạn</span>
+                                            <% } else { %>
+                                                <span class="status-badge"><%= payment.trangThai %></span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#paymentModal<%= payment._id %>">
+                                                <i class="fas fa-eye me-1"></i> Chi tiết
+                                            </button>
+                                            
+                                            <!-- Payment Modal -->
+                                            <div class="modal fade" id="paymentModal<%= payment._id %>" tabindex="-1" aria-labelledby="paymentModalLabel<%= payment._id %>" aria-hidden="true">
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="paymentModalLabel<%= payment._id %>">Chi tiết thanh toán</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="receipt">
+                                                                <div class="receipt-header">
+                                                                    <div class="receipt-title">BIÊN LAI THANH TOÁN</div>
+                                                                    <div class="receipt-subtitle">Chung cư Blue Moon</div>
+                                                                </div>
+                                                                <div class="receipt-body">
+                                                                    <div class="detail-row">
+                                                                        <div class="detail-label">Mã thanh toán:</div>
+                                                                        <div class="detail-value">#<%= payment._id.toString().substring(0, 8).toUpperCase() %></div>
+                                                                    </div>
+                                                                    <div class="detail-row">
+                                                                        <div class="detail-label">Khoản thu:</div>
+                                                                        <div class="detail-value"><%= payment.khoanThu ? payment.khoanThu.tenKhoanThu : 'Không xác định' %></div>
+                                                                    </div>
+                                                                    <div class="detail-row">
+                                                                        <div class="detail-label">Số tiền:</div>
+                                                                        <div class="detail-value"><strong><%= payment.soTien.toLocaleString('vi-VN') %> VND</strong></div>
+                                                                    </div>
+                                                                    <div class="detail-row">
+                                                                        <div class="detail-label">Người nộp:</div>
+                                                                        <div class="detail-value"><%= payment.tenNguoiNop %></div>
+                                                                    </div>
+                                                                    <div class="detail-row">
+                                                                        <div class="detail-label">Căn hộ:</div>
+                                                                        <div class="detail-value"><%= payment.canHo %></div>
+                                                                    </div>
+                                                                    <div class="detail-row">
+                                                                        <div class="detail-label">Ngày thanh toán:</div>
+                                                                        <div class="detail-value">
+                                                                            <% 
+                                                                                const modalDate = new Date(payment.ngayNop);
+                                                                                const modalDay = modalDate.getDate().toString().padStart(2, '0');
+                                                                                const modalMonth = (modalDate.getMonth() + 1).toString().padStart(2, '0');
+                                                                                const modalYear = modalDate.getFullYear();
+                                                                            %>
+                                                                            <%= modalDay %>/<%= modalMonth %>/<%= modalYear %>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="detail-row">
+                                                                        <div class="detail-label">Phương thức:</div>
+                                                                        <div class="detail-value">
+                                                                            <% if (payment.phuongThucThanhToan === 'cash') { %>
+                                                                                <i class="fas fa-money-bill-wave me-1"></i> Tiền mặt
+                                                                            <% } else if (payment.phuongThucThanhToan === 'bank') { %>
+                                                                                <i class="fas fa-credit-card me-1"></i> Chuyển khoản
+                                                                            <% } else if (payment.phuongThucThanhToan === 'qr') { %>
+                                                                                <i class="fas fa-qrcode me-1"></i> Quét mã QR
+                                                                            <% } else { %>
+                                                                                <%= payment.phuongThucThanhToan %>
+                                                                            <% } %>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="detail-row">
+                                                                        <div class="detail-label">Trạng thái:</div>
+                                                                        <div class="detail-value">
+                                                                            <% if (payment.trangThai === 'on-time') { %>
+                                                                                <span class="status-badge status-success">Đúng hạn</span>
+                                                                            <% } else if (payment.trangThai === 'late') { %>
+                                                                                <span class="status-badge status-warning">Trễ hạn</span>
+                                                                            <% } else { %>
+                                                                                <span class="status-badge"><%= payment.trangThai %></span>
+                                                                            <% } %>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="receipt-footer">
+                                                                    Cảm ơn bạn đã thanh toán!
+                                                                </div>
+                                                            </div>
+                                                            <button type="button" class="btn btn-primary print-btn" onclick="window.print()">
+                                                                <i class="fas fa-print me-1"></i> In biên lai
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Chưa có khoản thanh toán nào.
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="/cudan/khoan-thu" class="btn btn-primary">
+                    <i class="fas fa-money-bill-wave me-1"></i> Thanh toán khoản phí mới
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching functionality
+            const tabItems = document.querySelectorAll('.tab-item');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabItems.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    tabItems.forEach(item => item.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Show corresponding content
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+            
+            // Form validation for profile update
+            const updateProfileForm = document.getElementById('updateProfileForm');
+            if (updateProfileForm) {
+                updateProfileForm.addEventListener('submit', function(event) {
+                    const password = document.getElementById('updatePassword').value;
+                    const passwordConfirm = document.getElementById('updatePasswordConfirm').value;
+                    
+                    // Check if passwords match if password field is not empty
+                    if (password && password !== passwordConfirm) {
+                        event.preventDefault();
+                        alert('Mật khẩu xác nhận không khớp!');
+                        return false;
+                    }
+                    
+                    // Validate phone number (Vietnam format)
+                    const phone = document.getElementById('updatePhone').value;
+                    const phonePattern = /^(0|\+84)(\d{9,10})$/;
+                    if (phone && !phonePattern.test(phone)) {
+                        event.preventDefault();
+                        alert('Số điện thoại không hợp lệ!');
+                        return false;
+                    }
+                    
+                    // Validate email
+                    const email = document.getElementById('updateEmail').value;
+                    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (email && !emailPattern.test(email)) {
+                        event.preventDefault();
+                        alert('Địa chỉ email không hợp lệ!');
+                        return false;
+                    }
+                    
+                    // Validate CCCD/CMND (9-12 digits)
+                    const idNumber = document.getElementById('updateIdNumber').value;
+                    const idNumberPattern = /^\d{9,12}$/;
+                    if (idNumber && !idNumberPattern.test(idNumber)) {
+                        event.preventDefault();
+                        alert('Số CCCD/CMND không hợp lệ!');
+                        return false;
+                    }
+                    
+                    // If all validations pass, confirm before submitting
+                    if (!confirm('Bạn có chắc muốn cập nhật thông tin cá nhân?')) {
+                        event.preventDefault();
+                        return false;
+                    }
+                    
+                    return true;
+                });
+            }
+            
+            // Datepicker for date of birth
+            if ($.fn.datepicker) {
+                $("#updateDateOfBirth").datepicker({
+                    dateFormat: 'dd/mm/yy',
+                    changeMonth: true,
+                    changeYear: true,
+                    yearRange: "1950:2015",
+                    showButtonPanel: true,
+                    currentText: "Hôm nay",
+                    closeText: "Đóng",
+                    dayNames: ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"],
+                    dayNamesMin: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
+                    monthNames: ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"],
+                    monthNamesShort: ["Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"]
+                });
+            }
+        });
+    </script>
+</body>
+</html>

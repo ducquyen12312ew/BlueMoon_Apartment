@@ -5,7 +5,6 @@ const {
     UserCollection, 
     ApartmentCollection, 
     ResidentCollection, 
-    MaintenanceRequestCollection, 
     PaymentCollection,
     NoticeCollection,
     KhoanThuCollection,
@@ -15,7 +14,9 @@ const {
     TamVangCollection,
     BienDoiNhanKhauCollection,
     NopTienCollection,
-    MaintenanceStaffCollection
+    MaintenanceStaffCollection,
+    FeedbackCollection,
+    ResidentProfileCollection
 } = require('./config');
 
 const app = express();
@@ -1912,169 +1913,6 @@ app.get("/toquan/tamvang/:id", ensureAuthenticated, ensureToQuan, async (req, re
         res.status(500).send("Error viewing data: " + error.message);
     }
 });
-
-
-app.get("/toquan/maintenance", ensureAuthenticated, ensureToQuan, async (req, res) => {
-    try {
-        // Get all apartments for the dropdown in the form
-        const apartments = await ApartmentCollection.find().sort({ number: 1 });
-        
-        // Get all maintenance staff for assignment (for this demo, we'll use admin users as staff)
-        const maintenance_staff = await UserCollection.find({ role: 'admin' }).sort({ name: 1 });
-        
-        // Get all maintenance requests with populated references
-        const maintenanceRequests = await MaintenanceRequestCollection.find()
-            .populate('apartment')
-            .populate('requestedBy')
-            .populate('assignedTo')
-            .sort({ createdAt: -1 });
-        
-        res.render("maintenance-schedule", { 
-            apartments, 
-            maintenance_staff, 
-            maintenanceRequests 
-        });
-    } catch (error) {
-        console.error("Error loading maintenance page:", error);
-        res.status(500).send("Error loading maintenance page");
-    }
-});
-
-// Create new maintenance request
-app.post("/toquan/maintenance/create", ensureAuthenticated, ensureToQuan, async (req, res) => {
-    try {
-        const { apartment, priority, title, description, scheduledDate, assignedTo } = req.body;
-        
-        // Validate required fields
-        if (!apartment || !priority || !title || !description) {
-            return res.status(400).send("Missing required fields");
-        }
-        
-        // Parse scheduled date if provided
-        let parsedScheduledDate = null;
-        if (scheduledDate && scheduledDate.trim() !== '') {
-            if (scheduledDate.includes('/')) {
-                const [day, month, year] = scheduledDate.split('/');
-                parsedScheduledDate = new Date(year, month - 1, day);
-            } else {
-                parsedScheduledDate = new Date(scheduledDate);
-            }
-        }
-        
-        // Create new maintenance request
-        const newRequest = new MaintenanceRequestCollection({
-            apartment,
-            requestedBy: req.session.userId,
-            title,
-            description,
-            priority,
-            status: 'pending',
-            assignedTo: assignedTo || null,
-            scheduledDate: parsedScheduledDate,
-            notes: [{
-                text: `Yêu cầu bảo trì được tạo bởi ${req.session.name}`,
-                addedBy: req.session.userId,
-                addedAt: new Date()
-            }]
-        });
-        
-        await newRequest.save();
-        res.redirect("/maintenance");
-    } catch (error) {
-        console.error("Error creating maintenance request:", error);
-        res.status(500).send("Error creating maintenance request");
-    }
-});
-
-// Assign staff to maintenance request
-app.post("/toquan/maintenance/assign", ensureAuthenticated,ensureToQuan, async (req, res) => {
-    try {
-        const { requestId, staffMember, scheduledTime, notes } = req.body;
-        
-        // Validate required fields
-        if (!requestId || !staffMember || !scheduledTime) {
-            return res.status(400).send("Missing required fields");
-        }
-        
-        // Parse scheduled time
-        let parsedScheduledTime = null;
-        if (scheduledTime.includes('/')) {
-            const [day, month, year] = scheduledTime.split('/');
-            parsedScheduledTime = new Date(year, month - 1, day);
-        } else {
-            parsedScheduledTime = new Date(scheduledTime);
-        }
-        
-        // Update the maintenance request
-        const maintenanceRequest = await MaintenanceRequestCollection.findById(requestId);
-        if (!maintenanceRequest) {
-            return res.status(404).send("Maintenance request not found");
-        }
-        
-        maintenanceRequest.assignedTo = staffMember;
-        maintenanceRequest.status = 'in-progress';
-        maintenanceRequest.scheduledDate = parsedScheduledTime;
-        
-        // Add a note about the assignment
-        maintenanceRequest.notes.push({
-            text: notes ? `Phân công cho nhân viên. ${notes}` : 'Phân công cho nhân viên.',
-            addedBy: req.session.userId,
-            addedAt: new Date()
-        });
-        
-        await maintenanceRequest.save();
-        res.redirect("/maintenance");
-    } catch (error) {
-        console.error("Error assigning staff:", error);
-        res.status(500).send("Error assigning staff");
-    }
-});
-
-// Update maintenance request status
-app.post("/maintenance/update-status", ensureAuthenticated, ensureAdmin, async (req, res) => {
-    try {
-        const { requestId, status, notes } = req.body;
-        
-        // Validate required fields
-        if (!requestId || !status) {
-            return res.status(400).send("Missing required fields");
-        }
-        
-        // Update the maintenance request
-        const maintenanceRequest = await MaintenanceRequestCollection.findById(requestId);
-        if (!maintenanceRequest) {
-            return res.status(404).send("Maintenance request not found");
-        }
-        
-        maintenanceRequest.status = status;
-        
-        // If status is completed, set completedAt
-        if (status === 'completed') {
-            maintenanceRequest.completedAt = new Date();
-        }
-        
-        // Add a note about the status update
-        if (notes) {
-            maintenanceRequest.notes.push({
-                text: `Cập nhật trạng thái thành ${getStatusText(status)}. ${notes}`,
-                addedBy: req.session.userId,
-                addedAt: new Date()
-            });
-        } else {
-            maintenanceRequest.notes.push({
-                text: `Cập nhật trạng thái thành ${getStatusText(status)}.`,
-                addedBy: req.session.userId,
-                addedAt: new Date()
-            });
-        }
-        
-        await maintenanceRequest.save();
-        res.redirect("/maintenance");
-    } catch (error) {
-        console.error("Error updating status:", error);
-        res.status(500).send("Error updating status");
-    }
-});
 app.get("/topho/dashboard", ensureAuthenticated, ensureToPho, async (req, res) => {
     try {
         // Lấy số liệu thống kê từ database
@@ -2113,7 +1951,568 @@ app.get("/topho/dashboard", ensureAuthenticated, ensureToPho, async (req, res) =
     }
 });
 
+function ensureCuDan(req, res, next) {
+    if (req.session.role === 'cudan') {
+        return next();
+    }
+    res.status(403).send("Access Denied: Resident privileges required");
+}
+// Cập nhật route trang chủ cư dân để lấy dữ liệu lịch sử thanh toán thực tế
+// Thay đổi route này trong file index.js
 
+app.get("/cudan/dashboard", ensureAuthenticated, ensureCuDan, async (req, res) => {
+    try {
+        // Thông tin cá nhân cư dân
+        const residentInfo = {
+            name: req.session.name,
+            apartment: "A0101"
+        };
+        
+        // Lấy dữ liệu thực tế các khoản phí chưa thanh toán
+        // Giả sử các khoản phí sẽ được tạo trong KhoanThuCollection
+        // và các khoản đã thanh toán sẽ được lưu trong NopTienCollection
+        
+        // Lấy tất cả khoản thu
+        const allFees = await KhoanThuCollection.find().sort({ hanThanhToan: -1 });
+        
+        // Lấy tất cả khoản đã thanh toán của cư dân
+        const paidFees = await NopTienCollection.find({
+            tenNguoiNop: req.session.name,
+            canHo: "A0101" // Trong thực tế này sẽ là căn hộ của người dùng đăng nhập
+        }).populate('khoanThu').sort({ ngayNop: -1 });
+        
+        // Tính các khoản chưa thanh toán bằng cách lọc ra các khoản thu chưa có trong paidFees
+        const unpaidFeesList = allFees.filter(fee => {
+            return !paidFees.some(paid => 
+                paid.khoanThu && paid.khoanThu._id.toString() === fee._id.toString()
+            );
+        });
+        
+        // Format upcomingFees để hiển thị
+        const upcomingFees = unpaidFeesList.map(fee => ({
+            id: fee._id,
+            name: fee.tenKhoanThu,
+            amount: fee.soTien,
+            dueDate: fee.hanThanhToan
+        }));
+        
+        // Format recentPayments để hiển thị
+        const recentPayments = paidFees.map(payment => ({
+            id: payment._id,
+            name: payment.khoanThu ? payment.khoanThu.tenKhoanThu : 'Không xác định',
+            amount: payment.soTien,
+            paymentDate: payment.ngayNop,
+            status: payment.trangThai
+        }));
+        
+        // Nếu không có dữ liệu thực, dùng dữ liệu mẫu
+        if (recentPayments.length === 0) {
+            recentPayments.push(
+                {
+                    id: "recent1",
+                    name: "Phí quản lý tháng 04/2023",
+                    amount: 500000,
+                    paymentDate: new Date('2023-04-15'),
+                    status: 'on-time' 
+                },
+                {
+                    id: "recent2",
+                    name: "Phí gửi xe tháng 04/2023",
+                    amount: 200000,
+                    paymentDate: new Date('2023-04-15'),
+                    status: 'on-time'
+                },
+                {
+                    id: "recent3",
+                    name: "Phí dịch vụ quý 1/2023",
+                    amount: 1500000,
+                    paymentDate: new Date('2023-03-10'),
+                    status: 'on-time'
+                }
+            );
+        }
+        
+        // Nếu không có khoản phí chưa thanh toán, dùng dữ liệu mẫu
+        if (upcomingFees.length === 0) {
+            upcomingFees.push(
+                {
+                    id: "upcoming1",
+                    name: "Phí quản lý tháng 05/2023",
+                    amount: 500000,
+                    dueDate: new Date('2023-05-31')
+                },
+                {
+                    id: "upcoming2",
+                    name: "Phí gửi xe tháng 05/2023",
+                    amount: 200000,
+                    dueDate: new Date('2023-05-31')
+                }
+            );
+        }
+        
+        // Tính toán thống kê
+        const totalFees = allFees.length; 
+        const paidFeesCount = paidFees.length;
+        const unpaidFeesCount = unpaidFeesList.length;
+        
+        res.render("cudan-dashboard", {
+            user: {
+                name: req.session.name,
+                role: req.session.role,
+                id: req.session.userId,
+                apartment: "A0101"
+            },
+            residentInfo,
+            totalFees,
+            paidFees: paidFeesCount,
+            unpaidFees: unpaidFeesCount,
+            upcomingFees,
+            recentPayments
+        });
+    } catch (error) {
+        console.error("Dashboard error:", error);
+        res.status(500).send("Error loading dashboard: " + error.message);
+    }
+});
+
+// Trang khoản thu (thanh toán)
+app.get("/cudan/khoan-thu", ensureAuthenticated, ensureCuDan, async (req, res) => {
+    try {
+        // Get all khoản thu for dropdown, sorted by newest first
+        const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
+        
+        // Get user's previous payments to identify which fees have already been paid
+        const userPayments = await NopTienCollection.find({ 
+            tenNguoiNop: req.session.name,
+            canHo: "A0101" // This would be dynamic based on the user's apartment
+        });
+        
+        // Filter out fees that have already been paid
+        const unpaidKhoanThuList = khoanThuList.filter(khoanThu => {
+            return !userPayments.some(payment => 
+                payment.khoanThu && payment.khoanThu.toString() === khoanThu._id.toString()
+            );
+        });
+        
+        res.render("cudan-khoan-thu", { 
+            khoanThuList: unpaidKhoanThuList,
+            user: {
+                name: req.session.name,
+                role: req.session.role,
+                id: req.session.userId
+            }
+        });
+    } catch (error) {
+        console.error("Error loading thu phí form:", error);
+        res.status(500).send("Error loading thu phí form");
+    }
+});
+// Sửa lại route xử lý thanh toán trong file index.js
+
+// Xử lý thanh toán khoản thu
+app.post("/cudan/khoan-thu/thanh-toan", ensureAuthenticated, ensureCuDan, async (req, res) => {
+    try {
+        const { tenKhoanThu, ngayNop, paymentMethod } = req.body;
+        
+        // Validate inputs
+        if (!tenKhoanThu || !ngayNop) {
+            // Get khoản thu list for re-rendering the form
+            const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
+            
+            return res.render("cudan-khoan-thu", { 
+                error: "Vui lòng điền đầy đủ thông tin bắt buộc",
+                khoanThuList,
+                user: {
+                    name: req.session.name,
+                    role: req.session.role,
+                    id: req.session.userId
+                }
+            });
+        }
+        
+        // Get the khoản thu details
+        const khoanThu = await KhoanThuCollection.findById(tenKhoanThu);
+        if (!khoanThu) {
+            const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
+            return res.render("cudan-khoan-thu", { 
+                error: "Không tìm thấy khoản thu",
+                khoanThuList,
+                user: {
+                    name: req.session.name,
+                    role: req.session.role,
+                    id: req.session.userId
+                }
+            });
+        }
+        
+        // Check if this user already paid for this khoản thu
+        const existingPayment = await NopTienCollection.findOne({ 
+            khoanThu: tenKhoanThu,
+            tenNguoiNop: req.session.name,
+            canHo: "A0101" // This would be dynamic based on the user's apartment
+        });
+        
+        if (existingPayment) {
+            const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
+            return res.render("cudan-khoan-thu", { 
+                error: "Bạn đã thanh toán khoản phí này!",
+                khoanThuList,
+                user: {
+                    name: req.session.name,
+                    role: req.session.role,
+                    id: req.session.userId
+                }
+            });
+        }
+        
+        // Parse date properly
+        let paymentDate;
+        if (ngayNop.includes('/')) {
+            const [day, month, year] = ngayNop.split('/');
+            paymentDate = new Date(year, month - 1, day);
+        } else {
+            paymentDate = new Date(ngayNop);
+        }
+        
+        // Determine payment status
+        let paymentStatus = 'on-time';
+        if (khoanThu.hanThanhToan && paymentDate > khoanThu.hanThanhToan) {
+            paymentStatus = 'late';
+        }
+        
+        // Create new payment record
+        const newPayment = new NopTienCollection({
+            khoanThu: tenKhoanThu,
+            tenNguoiNop: req.session.name,
+            ngayNop: paymentDate,
+            soTien: khoanThu.soTien,
+            phuongThucThanhToan: paymentMethod || "cash",
+            nguoiThu: "self-service", // Marked as self-service since the user is paying themselves
+            canHo: "A0101", // This would be dynamic based on the user's apartment
+            trangThai: paymentStatus
+        });
+        
+        await newPayment.save();
+        
+        // Đổi điều hướng từ /cudan/lich-su thành /cudan/thong-tin
+        // Cập nhật thông báo thành công
+        req.session.paymentSuccess = `Thanh toán khoản phí ${khoanThu.tenKhoanThu} thành công!`;
+        res.redirect("/cudan/thong-tin");
+    } catch (error) {
+        console.error("Error processing payment:", error);
+        const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
+        res.render("cudan-khoan-thu", { 
+            error: "Lỗi khi xử lý thanh toán: " + error.message,
+            khoanThuList,
+            user: {
+                name: req.session.name,
+                role: req.session.role,
+                id: req.session.userId
+            }
+        });
+    }
+});
+app.post("/cudan/capnhat-thongtin", ensureAuthenticated, ensureCuDan, async (req, res) => {
+    try {
+        const { name, dateOfBirth, phone, email, idNumber, password } = req.body;
+        
+        // Tìm hoặc tạo hồ sơ cư dân
+        let residentProfile = await ResidentProfileCollection.findOne({ userId: req.session.userId });
+        
+        if (!residentProfile) {
+            // Nếu chưa có hồ sơ, tạo mới
+            residentProfile = new ResidentProfileCollection({
+                userId: req.session.userId,
+                name: req.session.name,
+                apartment: "A0101", // Giả định căn hộ
+                dateOfBirth: "01/01/1990",
+                phone: "0909123456",
+                email: "cudan@example.com",
+                idNumber: "001234567890",
+                moveInDate: "01/01/2023"
+            });
+        }
+        
+        // Cập nhật thông tin
+        residentProfile.name = name;
+        residentProfile.dateOfBirth = dateOfBirth;
+        residentProfile.phone = phone;
+        residentProfile.email = email;
+        residentProfile.idNumber = idNumber;
+        residentProfile.updatedAt = new Date();
+        
+        // Lưu cập nhật
+        await residentProfile.save();
+        
+        // Cập nhật tên trong session
+        req.session.name = name;
+        
+        // Nếu người dùng thay đổi mật khẩu
+        if (password && password.trim() !== '') {
+            // Trong thực tế, bạn sẽ mã hóa mật khẩu trước khi lưu
+            // Ví dụ: sử dụng bcrypt để hash password
+            console.log("Password changed, would encrypt and save in real app");
+
+        }
+        
+        // Đặt thông điệp thành công
+        req.session.profileUpdateSuccess = "Cập nhật thông tin cá nhân thành công!";
+        
+        // Redirect về trang thông tin cá nhân
+        res.redirect("/cudan/thong-tin");
+    } catch (error) {
+        console.error("Error updating resident information:", error);
+        req.session.profileUpdateError = "Lỗi khi cập nhật thông tin: " + error.message;
+        res.redirect("/cudan/thong-tin");
+    }
+});
+
+app.get("/cudan/thong-tin", ensureAuthenticated, ensureCuDan, async (req, res) => {
+    try {
+        // Tìm thông tin cá nhân từ cơ sở dữ liệu
+        let residentInfo = await ResidentProfileCollection.findOne({ userId: req.session.userId });
+        
+        // Nếu không có thông tin, tạo dữ liệu mặc định
+        if (!residentInfo) {
+            residentInfo = {
+                name: req.session.name,
+                apartment: "A0101",
+                dateOfBirth: "01/01/1990",
+                phone: "0909123456",
+                email: "cudan@example.com",
+                idNumber: "001234567890",
+                moveInDate: "01/01/2023"
+            };
+            
+            // Lưu thông tin mặc định vào cơ sở dữ liệu để lần sau có thể cập nhật
+            const newProfile = new ResidentProfileCollection({
+                userId: req.session.userId,
+                ...residentInfo
+            });
+            
+            await newProfile.save();
+        }
+        
+        // Lịch sử thanh toán
+        const payments = await NopTienCollection.find({ 
+            tenNguoiNop: req.session.name,
+            canHo: "A0101" // This would be dynamic based on the user's apartment
+        }).populate('khoanThu').sort({ ngayNop: -1 });
+        
+        // Check for success message from payment
+        const success = req.session.paymentSuccess;
+        req.session.paymentSuccess = null; // Clear the message after use
+        
+        // Check for success message from profile update
+        const profileUpdateSuccess = req.session.profileUpdateSuccess;
+        req.session.profileUpdateSuccess = null; // Clear the message after use
+        
+        // Check for error message from profile update
+        const profileUpdateError = req.session.profileUpdateError;
+        req.session.profileUpdateError = null; // Clear the message after use
+        
+        res.render("cudan-thong-tin", { 
+            residentInfo,
+            payments,
+            success,
+            profileUpdateSuccess,
+            profileUpdateError,
+            user: {
+                name: req.session.name,
+                role: req.session.role,
+                id: req.session.userId
+            }
+        });
+    } catch (error) {
+        console.error("Error loading resident information:", error);
+        res.status(500).send("Error loading resident information: " + error.message);
+    }
+});
+app.get("/cudan/feedback", ensureAuthenticated, ensureCuDan, async (req, res) => {
+    try {
+        // Get resident information
+        const residentName = req.session.name;
+        
+        // For demo, we'll use a placeholder apartment
+        // In a real app, you'd get this from your database based on the resident
+        const apartment = "A0101"; // Replace with logic to get actual apartment
+        
+        // Get feedback list for this resident
+        const feedbackList = await FeedbackCollection.find({ 
+            resident: residentName
+        }).sort({ createdAt: -1 });
+        
+        res.render("cudan-feedback", { 
+            feedbackList,
+            residentName,
+            apartment,
+            userName: residentName  // Fix for the error mentioned earlier
+        });
+    } catch (error) {
+        console.error("Error loading feedback form:", error);
+        res.status(500).send("Error loading feedback form: " + error.message);
+    }
+});
+
+// Submit feedback from resident
+app.post("/cudan/feedback/submit", ensureAuthenticated, ensureCuDan, async (req, res) => {
+    try {
+        const { title, category, description } = req.body;
+        
+        // Validate required fields
+        if (!title || !category || !description) {
+            // Get feedback list for re-rendering the form
+            const residentName = req.session.name;
+            const apartment = "A0101"; // Placeholder - replace with actual logic
+            const feedbackList = await FeedbackCollection.find({ 
+                resident: residentName
+            }).sort({ createdAt: -1 });
+            
+            return res.render("cudan-feedback", { 
+                error: "Vui lòng điền đầy đủ thông tin bắt buộc",
+                feedbackList,
+                residentName,
+                apartment,
+                userName: residentName
+            });
+        }
+        
+        // Get resident information
+        const residentName = req.session.name;
+        const apartment = "A0101"; // Placeholder - replace with actual logic
+        
+        // Create new feedback
+        const newFeedback = new FeedbackCollection({
+            resident: residentName,
+            apartment,
+            title,
+            description,
+            category,
+            status: 'pending'
+        });
+        
+        await newFeedback.save();
+        
+        // Get updated feedback list
+        const feedbackList = await FeedbackCollection.find({ 
+            resident: residentName
+        }).sort({ createdAt: -1 });
+        
+        // Render with success message
+        res.render("cudan-feedback", { 
+            success: "Phản ánh của bạn đã được gửi thành công và sẽ được xử lý trong thời gian sớm nhất.",
+            feedbackList,
+            residentName,
+            apartment,
+            userName: residentName
+        });
+    } catch (error) {
+        console.error("Error submitting feedback:", error);
+        res.status(500).send("Error submitting feedback: " + error.message);
+    }
+});
+
+//======== TEAM LEADER (TOQUAN) FEEDBACK MANAGEMENT ROUTES ========//
+// Display team leader feedback management page
+app.get("/toquan/bao-cao", ensureAuthenticated, ensureToQuan, async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 12; // Items per page
+        const skip = (page - 1) * limit;
+        
+        // Count by status for statistics
+        const pendingCount = await FeedbackCollection.countDocuments({ status: 'pending' });
+        const inProgressCount = await FeedbackCollection.countDocuments({ status: 'in-progress' });
+        const resolvedCount = await FeedbackCollection.countDocuments({ status: 'resolved' });
+        const rejectedCount = await FeedbackCollection.countDocuments({ status: 'rejected' });
+        
+        // Get total count for pagination
+        const totalCount = await FeedbackCollection.countDocuments();
+        const totalPages = Math.ceil(totalCount / limit);
+        
+        // Get feedback list with pagination
+        const feedbackList = await FeedbackCollection.find()
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+        
+        res.render("toquan-bao-cao", {
+            feedbackList,
+            pendingCount,
+            inProgressCount,
+            resolvedCount,
+            rejectedCount,
+            currentPage: page,
+            totalPages
+        });
+    } catch (error) {
+        console.error("Error loading feedback management:", error);
+        res.status(500).send("Error loading feedback management: " + error.message);
+    }
+});
+
+// Get feedback details for modal
+app.get("/toquan/bao-cao/:id", ensureAuthenticated, ensureToQuan, async (req, res) => {
+    try {
+        const feedback = await FeedbackCollection.findById(req.params.id);
+        
+        if (!feedback) {
+            return res.status(404).json({ error: "Phản ánh không tồn tại" });
+        }
+        
+        res.json(feedback);
+    } catch (error) {
+        console.error("Error getting feedback details:", error);
+        res.status(500).json({ error: "Error getting feedback details" });
+    }
+});
+
+// Respond to feedback
+app.post("/toquan/bao-cao/respond", ensureAuthenticated, ensureToQuan, async (req, res) => {
+    try {
+        const { feedbackId, status, responseText } = req.body;
+        
+        // Validate required fields
+        if (!feedbackId || !status) {
+            return res.status(400).send("Missing required fields");
+        }
+        
+        // Update feedback
+        const feedback = await FeedbackCollection.findById(feedbackId);
+        
+        if (!feedback) {
+            return res.status(404).send("Phản ánh không tồn tại");
+        }
+        
+        feedback.status = status;
+        
+        // Add response if provided
+        if (responseText && responseText.trim() !== '') {
+            feedback.response = {
+                text: responseText,
+                respondedBy: req.session.name,
+                respondedAt: new Date()
+            };
+        }
+        
+        feedback.updatedAt = new Date();
+        
+        await feedback.save();
+        
+        res.redirect("/toquan/bao-cao");
+    } catch (error) {
+        console.error("Error responding to feedback:", error);
+        res.status(500).send("Error responding to feedback: " + error.message);
+    }
+});
+
+// Add middleware function for resident role
+function ensureCuDan(req, res, next) {
+    if (req.session.role === 'cudan') {
+        return next();
+    }
+    res.status(403).send("Access Denied: Resident privileges required");
+}
 // Helper function to get status text in Vietnamese
 function getStatusText(status) {
     switch(status) {

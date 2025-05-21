@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý phản ánh - BlueMoon</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2a9d8f;
+            --secondary-color: #264653;
+            --light-color: #e9c46a;
+            --accent-color: #f4a261;
+            --dark-color: #e76f51;
+            --sidebar-width: 250px;
+            --border-radius: 12px;
+            --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            --transition-speed: 0.3s;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fc;
+        }
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--secondary-color) 0%, #1d3a47 100%);
+            position: fixed;
+            left: 0;
+            top: 0;
+            color: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            transition: width var(--transition-speed);
+        }
+        
+        .sidebar-header {
+            padding: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            letter-spacing: 1px;
+        }
+        
+        .sidebar-menu {
+            padding: 25px 0;
+            overflow-y: auto;
+            max-height: calc(100vh - 180px);
+        }
+        
+        .menu-item {
+            padding: 16px 25px;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            display: flex;
+            align-items: center;
+            font-size: 17px;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.85);
+            border-left: 3px solid transparent;
+        }
+        
+        .menu-item:hover {
+            background-color: rgba(42, 157, 143, 0.2);
+            color: white;
+            transform: translateX(3px);
+        }
+        
+        .menu-item.active {
+            background: linear-gradient(90deg, rgba(42, 157, 143, 0.2) 0%, rgba(42, 157, 143, 0) 100%);
+            border-left: 3px solid var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .menu-item i {
+            margin-right: 15px;
+            width: 24px;
+            text-align: center;
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            padding: 16px 25px;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            display: flex;
+            align-items: center;
+            font-size: 17px;
+            color: rgba(255, 255, 255, 0.85);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .logout-btn:hover {
+            background-color: rgba(231, 111, 81, 0.2);
+            color: white;
+        }
+        
+        .logout-btn i {
+            margin-right: 15px;
+            font-size: 18px;
+        }
+        
+        
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+        }
+        
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .filter-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .filter-select {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+            background-color: white;
+            min-width: 150px;
+        }
+        
+        /* Stats Cards */
+        .stats-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            flex: 1;
+            min-width: 200px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stat-card-yellow {
+            border-left: 5px solid #f6c23e;
+        }
+        
+        .stat-card-blue {
+            border-left: 5px solid #4e73df;
+        }
+        
+        .stat-card-green {
+            border-left: 5px solid #1cc88a;
+        }
+        
+        .stat-card-red {
+            border-left: 5px solid #e74a3b;
+        }
+        
+        .stat-info h2 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-info p {
+            color: #888;
+            margin: 0;
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border-radius: 50%;
+        }
+        
+        .stat-card-yellow .stat-icon {
+            color: #f6c23e;
+        }
+        
+        .stat-card-blue .stat-icon {
+            color: #4e73df;
+        }
+        
+        .stat-card-green .stat-icon {
+            color: #1cc88a;
+        }
+        
+        .stat-card-red .stat-icon {
+            color: #e74a3b;
+        }
+        
+        /* Search bar */
+        .search-container {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .search-input {
+            padding: 10px 15px;
+            padding-left: 40px;
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+            width: 100%;
+            font-size: 16px;
+            background-color: white;
+        }
+        
+        .search-input:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+            outline: none;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        /* Feedback Card Styles */
+        .feedback-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        
+        .feedback-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .feedback-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feedback-header {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            background-color: #f8f9fc;
+        }
+        
+        .feedback-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        
+        .feedback-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .feedback-date {
+            display: flex;
+            align-items: center;
+        }
+        
+        .feedback-date i {
+            margin-right: 5px;
+        }
+        
+        .feedback-category {
+            display: inline-block;
+            padding: 3px 8px;
+            background-color: #e9ecef;
+            color: #495057;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .feedback-body {
+            padding: 15px;
+            flex-grow: 1;
+        }
+        
+        .feedback-description {
+            color: #495057;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            margin-bottom: 15px;
+        }
+        
+        .feedback-apartment {
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .feedback-footer {
+            padding: 10px 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .feedback-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-in-progress {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-resolved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .view-details-btn {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .view-details-btn:hover {
+            background-color: var(--dark-blue);
+            color: white;
+            text-decoration: none;
+        }
+        
+        /* Pagination */
+        .pagination-container {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .pagination {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .page-item {
+            margin: 0 5px;
+        }
+        
+        .page-link {
+            display: block;
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+            color: var(--primary-blue);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .page-item.active .page-link {
+            background-color: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+        
+        .page-link:hover {
+            background-color: #e9ecef;
+            color: var(--dark-blue);
+        }
+        
+        /* Modal Styles */
+        .feedback-modal .modal-header {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+        
+        .feedback-modal .modal-footer {
+            border-top: none;
+            padding-top: 0;
+        }
+        
+        .feedback-detail-block {
+            margin-bottom: 20px;
+        }
+        
+        .feedback-detail-label {
+            font-weight: 500;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .feedback-detail-content {
+            padding: 10px;
+            background-color: #f8f9fc;
+            border-radius: 5px;
+            border: 1px solid #e3e6f0;
+        }
+        
+        .response-form {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .response-heading {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--dark-blue);
+        }
+        
+        .status-select {
+            margin-bottom: 15px;
+        }
+        
+        .response-textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .response-textarea:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+            outline: none;
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .feedback-list {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+            
+            .stats-cards {
+                flex-wrap: wrap;
+            }
+            
+            .stat-card {
+                flex: 1 0 45%;
+                margin-bottom: 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .main-content {
+                margin-left: 200px;
+            }
+            
+            .content-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .filter-container {
+                margin-top: 10px;
+                width: 100%;
+            }
+            
+            .filter-select {
+                flex: 1;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .sidebar {
+                width: 70px;
+            }
+            
+            .sidebar-header {
+                font-size: 20px;
+                padding: 15px 0;
+            }
+            
+            .menu-item span,
+            .logout-btn span {
+                display: none;
+            }
+            
+            .menu-item i,
+            .logout-btn i {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+                padding: 10px;
+            }
+            
+            .feedback-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-card {
+                flex: 1 0 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+     <!-- Sidebar -->
+     <div class="sidebar">
+        <div class="sidebar-header">
+            BLUEMOON
+        </div>
+        <div class="sidebar-menu">
+            <a href="/toquan/hokhau-nhankhau" class="menu-item">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Trang chủ</span>
+            </a>
+            <a href="/toquan/hokhau-nhankhau" class="menu-item">
+                <i class="fas fa-house-user"></i>
+                <span>Quản lý hộ khẩu</span>
+            </a>
+            <a href="/toquan/tamtrutamvang" class="menu-item">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Tạm trú tạm vắng</span>
+            </a>
+            <a href="/toquan/thongke" class="menu-item">
+                <i class="fas fa-chart-bar"></i>
+                <span>Thống kê</span>
+            </a>
+            <a href="/toquan/bao-cao" class="menu-item active">
+                <i class="fas fa-file-alt"></i>
+                <span>Phản ánh của cư dân</span>
+            </a>
+        </div>
+        <div class="logout-btn">
+            <a href="/logout" style="color: inherit; text-decoration: none; display: flex; align-items: center; width: 100%;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>ĐĂNG XUẤT</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="content-header">
+            <h1 class="page-title">Quản lý phản ánh kiến nghị</h1>
+            <div class="filter-container">
+                <select id="statusFilter" class="filter-select">
+                    <option value="all">Tất cả trạng thái</option>
+                    <option value="pending">Chờ xử lý</option>
+                    <option value="in-progress">Đang xử lý</option>
+                    <option value="resolved">Đã giải quyết</option>
+                    <option value="rejected">Từ chối</option>
+                </select>
+                <select id="categoryFilter" class="filter-select">
+                    <option value="all">Tất cả phân loại</option>
+                    <option value="maintenance">Bảo trì, sửa chữa</option>
+                    <option value="security">An ninh, an toàn</option>
+                    <option value="neighbor">Vấn đề hàng xóm</option>
+                    <option value="facilities">Tiện ích chung</option>
+                    <option value="payment">Vấn đề thanh toán</option>
+                    <option value="other">Khác</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="stats-cards">
+            <div class="stat-card stat-card-yellow">
+                <div class="stat-info">
+                    <h2><%= pendingCount %></h2>
+                    <p>Chờ xử lý</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+            <div class="stat-card stat-card-blue">
+                <div class="stat-info">
+                    <h2><%= inProgressCount %></h2>
+                    <p>Đang xử lý</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-spinner"></i>
+                </div>
+            </div>
+            <div class="stat-card stat-card-green">
+                <div class="stat-info">
+                    <h2><%= resolvedCount %></h2>
+                    <p>Đã giải quyết</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+            <div class="stat-card stat-card-red">
+                <div class="stat-info">
+                    <h2><%= rejectedCount %></h2>
+                    <p>Từ chối</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm theo tiêu đề, nội dung, hoặc căn hộ...">
+        </div>
+        
+        <!-- Feedback List -->
+        <div class="feedback-list">
+            <% if (feedbackList && feedbackList.length > 0) { %>
+                <% feedbackList.forEach(function(feedback) { %>
+                    <div class="feedback-card" 
+                         data-status="<%= feedback.status %>" 
+                         data-category="<%= feedback.category %>"
+                         data-id="<%= feedback._id %>">
+                        <div class="feedback-header">
+                            <h3 class="feedback-title"><%= feedback.title %></h3>
+                            <div class="feedback-info">
+                                <div class="feedback-date">
+                                    <i class="far fa-calendar-alt"></i>
+                                    <%= new Date(feedback.createdAt).toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' }) %>
+                                </div>
+                                <% 
+                                    let categoryText = "";
+                                    switch(feedback.category) {
+                                        case 'maintenance': categoryText = "Bảo trì, sửa chữa"; break;
+                                        case 'security': categoryText = "An ninh, an toàn"; break;
+                                        case 'neighbor': categoryText = "Vấn đề hàng xóm"; break;
+                                        case 'facilities': categoryText = "Tiện ích chung"; break;
+                                        case 'payment': categoryText = "Vấn đề thanh toán"; break;
+                                        case 'other': categoryText = "Khác"; break;
+                                    }
+                                %>
+                                <span class="feedback-category"><%= categoryText %></span>
+                            </div>
+                        </div>
+                        <div class="feedback-body">
+                            <div class="feedback-apartment">
+                                <i class="fas fa-building me-1"></i>
+                                Căn hộ: <%= feedback.apartment %>
+                            </div>
+                            <div class="feedback-description">
+                                <%= feedback.description %>
+                            </div>
+                        </div>
+                        <div class="feedback-footer">
+                            <% 
+                                let statusClass = "";
+                                let statusText = "";
+                                switch(feedback.status) {
+                                    case 'pending': 
+                                        statusClass = "status-pending"; 
+                                        statusText = "Chờ xử lý"; 
+                                        break;
+                                    case 'in-progress': 
+                                        statusClass = "status-in-progress"; 
+                                        statusText = "Đang xử lý"; 
+                                        break;
+                                    case 'resolved': 
+                                        statusClass = "status-resolved"; 
+                                        statusText = "Đã giải quyết"; 
+                                        break;
+                                    case 'rejected': 
+                                        statusClass = "status-rejected"; 
+                                        statusText = "Từ chối"; 
+                                        break;
+                                }
+                            %>
+                            <span class="feedback-status <%= statusClass %>"><%= statusText %></span>
+                            <button class="view-details-btn" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#feedbackModal" 
+                                    data-id="<%= feedback._id %>">
+                                Xem chi tiết
+                            </button>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Không có phản ánh kiến nghị nào.
+                    </div>
+                </div>
+            <% } %>
+        </div>
+        
+        <!-- Pagination -->
+        <% if (totalPages > 1) { %>
+            <div class="pagination-container">
+                <ul class="pagination">
+                    <% if (currentPage > 1) { %>
+                        <li class="page-item">
+                            <a class="page-link" href="/toquan/feedback?page=<%= currentPage - 1 %>">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                    <% } %>
+                    
+                    <% for (let i = 1; i <= totalPages; i++) { %>
+                        <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                            <a class="page-link" href="/toquan/feedback?page=<%= i %>"><%= i %></a>
+                        </li>
+                    <% } %>
+                    
+                    <% if (currentPage < totalPages) { %>
+                        <li class="page-item">
+                            <a class="page-link" href="/toquan/feedback?page=<%= currentPage + 1 %>">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    <% } %>
+                </ul>
+            </div>
+        <% } %>
+    </div>
+    
+    <!-- Feedback Detail Modal -->
+    <div class="modal fade feedback-modal" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="feedbackModalLabel">Chi tiết phản ánh</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="responseForm" action="/toquan/feedback/respond" method="POST">
+                        <input type="hidden" id="feedbackId" name="feedbackId">
+                        
+                        <div class="feedback-detail-block">
+                            <div class="feedback-detail-label">Tiêu đề</div>
+                            <div class="feedback-detail-content" id="modalTitle"></div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="feedback-detail-block">
+                                    <div class="feedback-detail-label">Người gửi</div>
+                                    <div class="feedback-detail-content" id="modalResident"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="feedback-detail-block">
+                                    <div class="feedback-detail-label">Căn hộ</div>
+                                    <div class="feedback-detail-content" id="modalApartment"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="feedback-detail-block">
+                                    <div class="feedback-detail-label">Ngày gửi</div>
+                                    <div class="feedback-detail-content" id="modalDate"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="feedback-detail-block">
+                                    <div class="feedback-detail-label">Phân loại</div>
+                                    <div class="feedback-detail-content" id="modalCategory"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="feedback-detail-block">
+                            <div class="feedback-detail-label">Nội dung</div>
+                            <div class="feedback-detail-content" id="modalDescription"></div>
+                        </div>
+                        
+                        <div id="existingResponse" class="mt-4 d-none">
+                            <div class="feedback-detail-label">Phản hồi từ Ban quản lý</div>
+                            <div class="feedback-detail-content" id="modalResponse"></div>
+                            <div class="mt-2 text-muted">
+                                <small>
+                                    Phản hồi bởi <span id="modalRespondedBy"></span> vào 
+                                    <span id="modalRespondedAt"></span>
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="response-form">
+                            <h5 class="response-heading">Phản hồi phản ánh</h5>
+                            
+                            <div class="form-group status-select">
+                                <label for="responseStatus" class="form-label">Trạng thái</label>
+                                <select class="form-control" id="responseStatus" name="status" required>
+                                    <option value="pending">Chờ xử lý</option>
+                                    <option value="in-progress">Đang xử lý</option>
+                                    <option value="resolved">Đã giải quyết</option>
+                                    <option value="rejected">Từ chối</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="responseText" class="form-label">Nội dung phản hồi</label>
+                                <textarea class="response-textarea" id="responseText" name="responseText" placeholder="Nhập nội dung phản hồi..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" id="submitResponse">Gửi phản hồi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Filtering functionality
+            function applyFilters() {
+                const statusFilter = $('#statusFilter').val();
+                const categoryFilter = $('#categoryFilter').val();
+                const searchText = $('#searchInput').val().toLowerCase();
+                
+                $('.feedback-card').each(function() {
+                    const card = $(this);
+                    const cardStatus = card.data('status');
+                    const cardCategory = card.data('category');
+                    const cardTitle = card.find('.feedback-title').text().toLowerCase();
+                    const cardDescription = card.find('.feedback-description').text().toLowerCase();
+                    const cardApartment = card.find('.feedback-apartment').text().toLowerCase();
+                    
+                    // Check status filter
+                    const statusMatch = statusFilter === 'all' || cardStatus === statusFilter;
+                    
+                    // Check category filter
+                    const categoryMatch = categoryFilter === 'all' || cardCategory === categoryFilter;
+                    
+                    // Check search text
+                    const searchMatch = searchText === '' || 
+                                      cardTitle.includes(searchText) ||
+                                      cardDescription.includes(searchText) ||
+                                      cardApartment.includes(searchText);
+                    
+                    // Show/hide card based on filters
+                    if (statusMatch && categoryMatch && searchMatch) {
+                        card.show();
+                    } else {
+                        card.hide();
+                    }
+                });
+                
+                // Check if any cards are visible
+                if ($('.feedback-card:visible').length === 0) {
+                    // No cards visible, show message
+                    if ($('.no-results-message').length === 0) {
+                        $('.feedback-list').append('<div class="no-results-message col-12"><div class="alert alert-info">Không tìm thấy phản ánh kiến nghị nào phù hợp với bộ lọc.</div></div>');
+                    }
+                } else {
+                    // Remove no results message if it exists
+                    $('.no-results-message').remove();
+                }
+            }
+            
+            // Apply filters on change
+            $('#statusFilter, #categoryFilter').change(function() {
+                applyFilters();
+            });
+            
+            // Apply filters on search input
+            $('#searchInput').on('input', function() {
+                applyFilters();
+            });
+            
+            // Handle modal opening
+            $('#feedbackModal').on('show.bs.modal', function(event) {
+                const button = $(event.relatedTarget);
+                const feedbackId = button.data('id');
+                
+                // Find the feedback data from the card
+                const card = $(`.feedback-card[data-id="${feedbackId}"]`);
+                
+                if (card.length) {
+                    // Get the modal
+                    const modal = $(this);
+                    
+                    // Update hidden input
+                    modal.find('#feedbackId').val(feedbackId);
+                    
+                    // We need to make an AJAX call to get the full feedback details
+                    $.ajax({
+                        url: `/toquan/feedback/${feedbackId}`,
+                        method: 'GET',
+                        dataType: 'json',
+                        success: function(data) {
+                            // Populate modal with feedback details
+                            modal.find('#modalTitle').text(data.title || '');
+                            modal.find('#modalResident').text(data.resident || '');
+                            modal.find('#modalApartment').text(data.apartment || '');
+                            
+                            // Format date
+                            const createdDate = new Date(data.createdAt);
+                            const formattedDate = createdDate.toLocaleDateString('vi-VN', { 
+                                year: 'numeric', 
+                                month: '2-digit', 
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            modal.find('#modalDate').text(formattedDate);
+                            
+                            // Set category
+                            let categoryText = "";
+                            switch(data.category) {
+                                case 'maintenance': categoryText = "Bảo trì, sửa chữa"; break;
+                                case 'security': categoryText = "An ninh, an toàn"; break;
+                                case 'neighbor': categoryText = "Vấn đề hàng xóm"; break;
+                                case 'facilities': categoryText = "Tiện ích chung"; break;
+                                case 'payment': categoryText = "Vấn đề thanh toán"; break;
+                                case 'other': categoryText = "Khác"; break;
+                            }
+                            modal.find('#modalCategory').text(categoryText);
+                            
+                            // Set description
+                            modal.find('#modalDescription').text(data.description || '');
+                            
+                            // Set existing response if available
+                            if (data.response && data.response.text) {
+                                modal.find('#existingResponse').removeClass('d-none');
+                                modal.find('#modalResponse').text(data.response.text || '');
+                                modal.find('#modalRespondedBy').text(data.response.respondedBy || '');
+                                
+                                // Format response date
+                                const respondedDate = new Date(data.response.respondedAt);
+                                const formattedRespondedDate = respondedDate.toLocaleDateString('vi-VN', { 
+                                    year: 'numeric', 
+                                    month: '2-digit', 
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+                                modal.find('#modalRespondedAt').text(formattedRespondedDate);
+                                
+                                // Pre-fill response form with existing data
+                                modal.find('#responseStatus').val(data.status);
+                                modal.find('#responseText').val(data.response.text);
+                            } else {
+                                modal.find('#existingResponse').addClass('d-none');
+                                modal.find('#responseStatus').val(data.status);
+                                modal.find('#responseText').val('');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error("Error fetching feedback details:", error);
+                            alert("Không thể tải thông tin phản ánh. Vui lòng thử lại sau.");
+                        }
+                    });
+                }
+            });
+            
+            // Handle response submission
+            $('#submitResponse').click(function() {
+                $('#responseForm').submit();
+            });
+        });
+    </script>
+</body>
+</html>

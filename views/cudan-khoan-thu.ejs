@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thu Phí - BlueMoon</title>
+    <title>Khoản Thu - BlueMoon</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     <style>
         :root {
-            --primary-blue: #4e73df;
-            --light-blue: #8bb3ff;
-            --dark-blue: #3a5fc8;
+            --primary-color: #333333;
+            --light-color: #555555;
+            --dark-color: #222222;
             --sidebar-width: 250px;
         }
         
@@ -26,7 +26,7 @@
         .sidebar {
             width: var(--sidebar-width);
             height: 100vh;
-            background-color: var(--primary-blue);
+            background-color: var(--primary-color);
             position: fixed;
             left: 0;
             top: 0;
@@ -59,11 +59,11 @@
         }
         
         .menu-item:hover {
-            background-color: var(--dark-blue);
+            background-color: var(--dark-color);
         }
         
         .menu-item.active {
-            background-color: var(--dark-blue);
+            background-color: var(--dark-color);
             border-left: 5px solid white;
         }
         
@@ -87,7 +87,7 @@
         }
         
         .logout-btn:hover {
-            background-color: var(--dark-blue);
+            background-color: var(--dark-color);
         }
         
         .logout-btn i {
@@ -110,7 +110,7 @@
         }
         
         .form-header {
-            background-color: var(--primary-blue);
+            background-color: var(--primary-color);
             color: white;
             padding: 20px;
             border-top-left-radius: 10px;
@@ -151,8 +151,8 @@
         }
         
         .form-control:focus {
-            border-color: var(--primary-blue);
-            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(51, 51, 51, 0.25);
         }
         
         .required-field::after {
@@ -177,8 +177,8 @@
         }
 
         .form-date-picker .form-control:focus {
-            border-color: var(--primary-blue);
-            box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(51, 51, 51, 0.25);
         }
 
         .form-date-picker i {
@@ -186,7 +186,7 @@
             right: 15px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--primary-blue);
+            color: var(--primary-color);
             font-size: 20px;
             cursor: pointer;
         }
@@ -206,7 +206,7 @@
         .ui-datepicker .ui-datepicker-header {
             padding: 12px 0;
             border: none;
-            background: var(--primary-blue);
+            background: var(--primary-color);
             border-radius: 8px;
             color: white;
         }
@@ -255,7 +255,7 @@
         .ui-datepicker th {
             padding: 10px 0;
             font-weight: bold;
-            color: var(--primary-blue);
+            color: var(--primary-color);
         }
 
         .ui-datepicker td span, 
@@ -273,18 +273,18 @@
         }
 
         .ui-datepicker td a.ui-state-default:hover {
-            background: var(--light-blue);
+            background: var(--light-color);
             color: white;
         }
 
         .ui-datepicker td a.ui-state-active {
-            background: var(--primary-blue);
+            background: var(--primary-color);
             color: white;
         }
 
         .ui-datepicker td a.ui-state-highlight {
-            background: rgba(78, 115, 223, 0.1);
-            border: 1px solid var(--primary-blue);
+            background: rgba(51, 51, 51, 0.1);
+            border: 1px solid var(--primary-color);
         }
 
         .ui-datepicker .ui-datepicker-buttonpane {
@@ -294,7 +294,7 @@
         }
 
         .ui-datepicker .ui-datepicker-buttonpane button {
-            background: var(--primary-blue);
+            background: var(--primary-color);
             color: white;
             border: none;
             border-radius: 5px;
@@ -305,7 +305,7 @@
         }
 
         .ui-datepicker .ui-datepicker-buttonpane button:hover {
-            background: var(--dark-blue);
+            background: var(--dark-color);
         }
         
         /* Payment method styles */
@@ -329,21 +329,21 @@
         }
         
         .payment-method:hover {
-            border-color: var(--primary-blue);
-            background-color: rgba(78, 115, 223, 0.05);
+            border-color: var(--primary-color);
+            background-color: rgba(51, 51, 51, 0.05);
             transform: translateY(-3px);
         }
         
         .payment-method.selected {
-            border-color: var(--primary-blue);
-            background-color: rgba(78, 115, 223, 0.1);
-            box-shadow: 0 5px 15px rgba(78, 115, 223, 0.1);
+            border-color: var(--primary-color);
+            background-color: rgba(51, 51, 51, 0.1);
+            box-shadow: 0 5px 15px rgba(51, 51, 51, 0.1);
         }
         
         .payment-method i {
             font-size: 28px;
             margin-bottom: 12px;
-            color: var(--primary-blue);
+            color: var(--primary-color);
         }
         
         .payment-method-name {
@@ -378,14 +378,14 @@
         }
         
         .btn-primary {
-            background-color: var(--primary-blue);
-            border: 1px solid var(--primary-blue);
+            background-color: var(--primary-color);
+            border: 1px solid var(--primary-color);
             color: white;
         }
         
         .btn-primary:hover {
-            background-color: var(--dark-blue);
-            border-color: var(--dark-blue);
+            background-color: var(--dark-color);
+            border-color: var(--dark-color);
         }
         
         /* Alert styles */
@@ -408,6 +408,44 @@
             border-color: #c3e6cb;
             color: #155724;
             border-left-color: #28a745;
+        }
+        
+        /* Fee information styles */
+        .fee-info {
+            background-color: #f8f9fc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .fee-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        .fee-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .fee-detail-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .fee-detail-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .fee-detail-value {
+            font-size: 16px;
+            font-weight: 500;
         }
         
         /* Responsive Styles */
@@ -486,28 +524,38 @@
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
             BLUEMOON
         </div>
-        <div class="sidebar-menu">
-            <a href="/admin/dashboard" class="menu-item">
-                <i class="fas fa-home"></i>
-                <span>Trang chủ</span>
-            </a>
-            <a href="/khoan-thu/create" class="menu-item">
-                <i class="fas fa-money-bill-wave"></i>
-                <span>Khoản thu</span>
-            </a>
-            <a href="/thu-phi" class="menu-item active">
-                <i class="fas fa-hand-holding-dollar"></i>
-                <span>Thu phí</span>
-            </a>
-            <a href="/thong-ke" class="menu-item">
-                <i class="fas fa-chart-bar"></i>
-                <span>Thống kê</span>
-            </a>
+        <div class="sidebar">
+            <div class="sidebar-header">
+                BLUEMOON
+            </div>
+            <div class="sidebar-menu">
+                <a href="/cudan/dashboard" class="menu-item">
+                    <i class="fas fa-home"></i>
+                    <span>Trang chủ</span>
+                </a>
+                <a href="/cudan/khoan-thu" class="menu-item active">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Nộp phí</span>
+                </a>
+                <a href="/cudan/feedback" class="menu-item">
+                    <i class="fas fa-comment-alt"></i>
+                    <span>Phản ánh</span>
+                </a>
+                <a href="/cudan/thong-tin" class="menu-item">
+                    <i class="fas fa-user"></i>
+                    <span>Thông tin cá nhân</span>
+                </a>
+            </div>
+            <div class="logout-btn">
+                <a href="/logout" style="color: white; text-decoration: none; display: flex; align-items: center;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>ĐĂNG XUẤT</span>
+                </a>
+            </div>
         </div>
         <div class="logout-btn">
             <a href="/logout" style="color: white; text-decoration: none; display: flex; align-items: center;">
@@ -521,8 +569,8 @@
     <div class="main-content">
         <div class="form-card">
             <div class="form-header">
-                <h1>Thu phí</h1>
-                <p>Thông tin thu phí cư dân</p>
+                <h1>Thanh Toán Khoản Thu</h1>
+                <p>Thông tin khoản thu và phương thức thanh toán</p>
             </div>
             <div class="form-body">
                 <% if (typeof error !== 'undefined') { %>
@@ -532,12 +580,19 @@
                     </div>
                 <% } %>
                 
-                <form id="thuPhiForm" action="/thu-phi/create" method="POST">
-                    <!-- Form Row 1 -->
-                    <div class="row mb-3">
+                <% if (typeof success !== 'undefined') { %>
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <%= success %>
+                    </div>
+                <% } %>
+                
+                <form id="thuPhiForm" action="/cudan/khoan-thu/thanh-toan" method="POST">
+                    <!-- Khoản thu selection section -->
+                    <div class="row mb-4">
                         <div class="col-12">
                             <div class="form-group">
-                                <label for="tenKhoanThu" class="form-label required-field">Tên khoản thu</label>
+                                <label for="tenKhoanThu" class="form-label required-field">Chọn khoản thu</label>
                                 <select class="form-control" id="tenKhoanThu" name="tenKhoanThu" required>
                                     <option value="" disabled selected>Chọn khoản thu</option>
                                     <% if (khoanThuList && khoanThuList.length > 0) { %>
@@ -552,27 +607,50 @@
                         </div>
                     </div>
                     
-                    <!-- Form Row 2 -->
+                    <!-- Fee information display (shown after selecting a fee) -->
+                    <div id="feeInformation" class="fee-info mb-4" style="display: none;">
+                        <div class="fee-title">Thông tin khoản thu</div>
+                        <div class="fee-details">
+                            <div class="fee-detail-item">
+                                <div class="fee-detail-label">Tên khoản thu</div>
+                                <div class="fee-detail-value" id="displayFeeName">--</div>
+                            </div>
+                            <div class="fee-detail-item">
+                                <div class="fee-detail-label">Số tiền</div>
+                                <div class="fee-detail-value" id="displayFeeAmount">--</div>
+                            </div>
+                            <div class="fee-detail-item">
+                                <div class="fee-detail-label">Loại khoản thu</div>
+                                <div class="fee-detail-value" id="displayFeeType">--</div>
+                            </div>
+                            <div class="fee-detail-item">
+                                <div class="fee-detail-label">Hạn thanh toán</div>
+                                <div class="fee-detail-value" id="displayFeeDueDate">--</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Resident Information -->
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="tenNguoiNop" class="form-label required-field">Tên người nộp</label>
-                                <input type="text" class="form-control" id="tenNguoiNop" name="tenNguoiNop" placeholder="Nhập tên người nộp" required>
+                                <input type="text" class="form-control" id="tenNguoiNop" name="tenNguoiNop" value="<%= user ? user.name : '' %>" readonly required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="canHo" class="form-label required-field">Căn hộ</label>
-                                <input type="text" class="form-control" id="canHo" name="canHo" placeholder="Ví dụ: A0101" required>
+                                <input type="text" class="form-control" id="canHo" name="canHo" value="A0101" readonly required>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Form Row 3 -->
+                    <!-- Payment date -->
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="form-group">
-                                <label for="ngayNop" class="form-label required-field">Ngày nộp</label>
+                                <label for="ngayNop" class="form-label required-field">Ngày thanh toán</label>
                                 <div class="form-date-picker">
                                     <input type="text" class="form-control date-picker" id="ngayNop" name="ngayNop" placeholder="dd/mm/yyyy" readonly required>
                                     <i class="far fa-calendar-alt"></i>
@@ -581,7 +659,7 @@
                         </div>
                     </div>
                     
-                    <!-- Form Row 4 -->
+                    <!-- Payment methods -->
                     <div class="row">
                         <div class="col-12">
                             <div class="form-group">
@@ -607,10 +685,44 @@
                         </div>
                     </div>
                     
+                    <!-- Bank transfer info, shown only when bank transfer is selected -->
+                    <div id="bankTransferInfo" class="row mt-4" style="display: none;">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Thông tin chuyển khoản</h5>
+                                <hr>
+                                <p>Vui lòng chuyển khoản theo thông tin dưới đây:</p>
+                                <p><strong>Tên tài khoản:</strong> CÔNG TY QUẢN LÝ BLUE MOON</p>
+                                <p><strong>Số tài khoản:</strong> 1234567890</p>
+                                <p><strong>Ngân hàng:</strong> Vietcombank - Chi nhánh Hà Nội</p>
+                                <p><strong>Nội dung:</strong> <span id="transferContent">A0101 - Thanh toán [Tên khoản thu]</span></p>
+                                <p class="mb-0 text-danger">Lưu ý: Vui lòng ghi đúng nội dung chuyển khoản để chúng tôi có thể xác nhận thanh toán của bạn.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- QR code info, shown only when QR payment is selected -->
+                    <div id="qrCodeInfo" class="row mt-4" style="display: none;">
+                        <div class="col-12 text-center">
+                            <div class="alert alert-info">
+                                <h5 class="alert-heading"><i class="fas fa-qrcode me-2"></i>Thanh toán bằng QR Code</h5>
+                                <hr>
+                                <p>Quét mã QR bên dưới để thanh toán:</p>
+                                <div class="d-flex justify-content-center my-3">
+                                    <div style="background-color: white; padding: 15px; border-radius: 10px;">
+                                        <img src="https://via.placeholder.com/200x200?text=QR+Code" alt="QR Code" class="img-fluid" style="max-width: 200px;">
+                                    </div>
+                                </div>
+                                <p>Hoặc mở ứng dụng ngân hàng và quét mã QR để thanh toán</p>
+                                <p class="mb-0 text-danger">Lưu ý: Sau khi thanh toán, hãy nhấn xác nhận để chúng tôi cập nhật trạng thái thanh toán của bạn.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Form Actions -->
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" id="btnCancel">Hủy bỏ</button>
-                        <button type="submit" class="btn btn-primary" id="btnSubmit">Xác nhận thu phí</button>
+                        <button type="submit" class="btn btn-primary" id="btnSubmit">Xác nhận thanh toán</button>
                     </div>
                 </form>
             </div>
@@ -671,12 +783,57 @@
                 // Update hidden radio button
                 const method = $(this).data("method");
                 $("input[name='paymentMethod'][value='" + method + "']").prop("checked", true);
+                
+                // Show/hide payment method specific information
+                if (method === "bank") {
+                    $("#bankTransferInfo").show();
+                    $("#qrCodeInfo").hide();
+                } else if (method === "qr") {
+                    $("#qrCodeInfo").show();
+                    $("#bankTransferInfo").hide();
+                } else {
+                    $("#bankTransferInfo").hide();
+                    $("#qrCodeInfo").hide();
+                }
+            });
+            
+            // Handle fee selection to display fee information
+            $("#tenKhoanThu").change(function() {
+                const selectedFeeId = $(this).val();
+                
+                if (selectedFeeId) {
+                    // In a real application, you would fetch the fee details via AJAX
+                    // For this example, we'll simulate the data
+                    
+                    // Simulated fee data (this would come from your backend)
+                    const feeData = {
+                        name: $("#tenKhoanThu option:selected").text(),
+                        amount: "500,000 VND", // This would be dynamic based on selection
+                        type: "Bắt buộc", // This would be dynamic based on selection
+                        dueDate: "31/05/2025" // This would be dynamic based on selection
+                    };
+                    
+                    // Update the display
+                    $("#displayFeeName").text(feeData.name);
+                    $("#displayFeeAmount").text(feeData.amount);
+                    $("#displayFeeType").text(feeData.type);
+                    $("#displayFeeDueDate").text(feeData.dueDate);
+                    
+                    // Update bank transfer content
+                    $("#transferContent").text(`A0101 - Thanh toán ${feeData.name}`);
+                    
+                    // Show the fee information section
+                    $("#feeInformation").show();
+                } else {
+                    // Hide the fee information if no fee is selected
+                    $("#feeInformation").hide();
+                }
             });
             
             // Cancel button handler
             $("#btnCancel").click(function() {
-                if (confirm("Bạn có chắc muốn hủy bỏ việc thu phí này?")) {
-                    window.location.href = "/admin/dashboard";
+                if (confirm("Bạn có chắc muốn hủy bỏ việc thanh toán này?")) {
+                    window.location.href = "/cudan/dashboard";
                 }
             });
             
@@ -684,7 +841,7 @@
             $("#thuPhiForm").submit(function(event) {
                 let isValid = true;
                 
-                // Validate tên khoản thu
+                // Validate khoản thu selection
                 const tenKhoanThu = $("#tenKhoanThu").val();
                 if (!tenKhoanThu) {
                     alert("Vui lòng chọn khoản thu");
@@ -692,26 +849,10 @@
                     isValid = false;
                 }
                 
-                // Validate tên người nộp
-                const tenNguoiNop = $("#tenNguoiNop").val().trim();
-                if (!tenNguoiNop) {
-                    alert("Vui lòng nhập tên người nộp");
-                    $("#tenNguoiNop").focus();
-                    isValid = false;
-                }
-                
-                // Validate căn hộ
-                const canHo = $("#canHo").val().trim();
-                if (!canHo) {
-                    alert("Vui lòng nhập mã căn hộ");
-                    $("#canHo").focus();
-                    isValid = false;
-                }
-                
-                // Validate ngày nộp
+                // Validate payment date
                 const ngayNop = $("#ngayNop").val().trim();
                 if (!ngayNop) {
-                    alert("Vui lòng chọn ngày nộp");
+                    alert("Vui lòng chọn ngày thanh toán");
                     $("#ngayNop").focus();
                     isValid = false;
                 }
@@ -720,7 +861,7 @@
                     event.preventDefault();
                 } else {
                     // Show confirmation message
-                    if (!confirm("Xác nhận thông tin thu phí này?")) {
+                    if (!confirm("Xác nhận thanh toán khoản thu này?")) {
                         event.preventDefault();
                     }
                 }
