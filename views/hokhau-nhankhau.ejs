@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Style từ file cũ giữ nguyên */
         :root {
             --primary-color: #2a9d8f;
             --secondary-color: #264653;
@@ -125,16 +126,6 @@
             margin-bottom: 30px;
             padding-bottom: 15px;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        
-        .page-title-container {
-            display: flex;
-            flex-direction: column;
         }
         
         .page-title {
@@ -158,12 +149,7 @@
             margin-bottom: 0;
         }
         
-        .header-actions {
-            display: flex;
-            gap: 10px;
-        }
-        
-        /* Tabs Styling */
+        /* Tab Navigation */
         .tab-navigation {
             display: flex;
             margin-bottom: 20px;
@@ -331,11 +317,11 @@
             width: 32px;
             height: 32px;
             border-radius: 4px;
-            background-color: #f8f9fa;
-            color: #6c757d;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            transition: all 0.2s;
+            background-color: rgba(38, 70, 83, 0.1);
+            color: var(--secondary-color);
+            border: none;
             margin-right: 5px;
+            transition: all 0.2s;
         }
         
         .action-btn:hover {
@@ -485,6 +471,15 @@
             margin-bottom: 20px;
         }
         
+        /* Debug Section */
+        .debug-section {
+            background-color: #f8f9fc; 
+            padding: 10px; 
+            margin-bottom: 20px; 
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        
         /* Responsive Styles */
         @media (max-width: 768px) {
             .sidebar {
@@ -581,6 +576,16 @@
 
     <!-- Main Content -->
     <div class="main-content">
+        <!-- Debug section để phát hiện dữ liệu -->
+        <div class="debug-section">
+            <h4>Debug Info:</h4>
+            <p>Total Hộ Khẩu: <%= typeof totalHoKhau !== 'undefined' ? totalHoKhau : 'undefined' %></p>
+            <p>hokhauList: <%= typeof hokhauList !== 'undefined' ? (hokhauList ? 'Defined with ' + hokhauList.length + ' items' : 'Defined but null/empty') : 'undefined' %></p>
+            <% if (typeof hokhauList !== 'undefined' && hokhauList && hokhauList.length > 0) { %>
+                <p>First household: <%= hokhauList[0].soHoKhau %> - <%= hokhauList[0].hoTenChuHo %></p>
+            <% } %>
+        </div>
+
         <div class="page-header">
             <div class="page-title-container">
                 <h1 class="page-title">
@@ -609,7 +614,7 @@
         <div class="tab-content" id="hokhau-content">
             <!-- Search Box -->
             <div class="search-container">
-                <input type="text" class="search-box" placeholder="Tìm kiếm hộ khẩu theo số, chủ hộ hoặc địa chỉ...">
+                <input type="text" class="search-box" id="hokhau-search" placeholder="Tìm kiếm hộ khẩu theo số, chủ hộ hoặc địa chỉ...">
                 <i class="fas fa-search search-icon"></i>
             </div>
 
@@ -631,228 +636,40 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Dòng 1 - Hộ khẩu có thể mở rộng để hiển thị các thành viên -->
-                                <tr class="household-header" data-household="1">
-                                    <td>1</td>
-                                    <td>HK001</td>
-                                    <td>Nguyễn Văn A</td>
-                                    <td>Căn hộ A0101, BlueMoon Apartment</td>
-                                    <td>4</td>
-                                    <td>01/04/2023</td>
-                                    <td><span class="status-badge status-active">Hoạt động</span></td>
-                                    <td>
-                                        <button class="action-btn action-btn-view" title="Xem chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="action-btn" title="Chỉnh sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="action-btn action-btn-delete" title="Xóa">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <!-- Thành viên của hộ khẩu 1 (mặc định ẩn) -->
-                                <tr class="resident-row" data-household="1" style="display: none;">
-                                    <td colspan="8">
-                                        <div class="ps-4">
-                                            <table class="w-100">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Họ tên</th>
-                                                        <th>Quan hệ với chủ hộ</th>
-                                                        <th>Ngày sinh</th>
-                                                        <th>Giới tính</th>
-                                                        <th>CCCD/CMND</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="resident-info">
-                                                                <div class="resident-avatar"><i class="fas fa-user"></i></div>
-                                                                <span>Nguyễn Văn A</span>
-                                                            </div>
-                                                        </td>
-                                                        <td>Chủ hộ</td>
-                                                        <td>10/05/1975</td>
-                                                        <td>Nam</td>
-                                                        <td>001075123456</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="resident-info">
-                                                                <div class="resident-avatar"><i class="fas fa-user"></i></div>
-                                                                <span>Nguyễn Thị B</span>
-                                                            </div>
-                                                        </td>
-                                                        <td>Vợ</td>
-                                                        <td>15/08/1980</td>
-                                                        <td>Nữ</td>
-                                                        <td>001080123457</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="resident-info">
-                                                                <div class="resident-avatar"><i class="fas fa-user"></i></div>
-                                                                <span>Nguyễn Văn C</span>
-                                                            </div>
-                                                        </td>
-                                                        <td>Con trai</td>
-                                                        <td>20/03/2005</td>
-                                                        <td>Nam</td>
-                                                        <td>001005123458</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="resident-info">
-                                                                <div class="resident-avatar"><i class="fas fa-user"></i></div>
-                                                                <span>Nguyễn Thị D</span>
-                                                            </div>
-                                                        </td>
-                                                        <td>Con gái</td>
-                                                        <td>25/11/2010</td>
-                                                        <td>Nữ</td>
-                                                        <td>001010123459</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <!-- Dòng 2 -->
-                                <tr class="household-header" data-household="2">
-                                    <td>2</td>
-                                    <td>HK002</td>
-                                    <td>Trần Thị E</td>
-                                    <td>Căn hộ B0205, BlueMoon Apartment</td>
-                                    <td>3</td>
-                                    <td>15/06/2023</td>
-                                    <td><span class="status-badge status-active">Hoạt động</span></td>
-                                    <td>
-                                        <button class="action-btn action-btn-view" title="Xem chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="action-btn" title="Chỉnh sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="action-btn action-btn-delete" title="Xóa">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <!-- Thành viên của hộ khẩu 2 (mặc định ẩn) -->
-                                <tr class="resident-row" data-household="2" style="display: none;">
-                                    <td colspan="8">
-                                        <div class="ps-4">
-                                            <table class="w-100">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Họ tên</th>
-                                                        <th>Quan hệ với chủ hộ</th>
-                                                        <th>Ngày sinh</th>
-                                                        <th>Giới tính</th>
-                                                        <th>CCCD/CMND</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="resident-info">
-                                                                <div class="resident-avatar"><i class="fas fa-user"></i></div>
-                                                                <span>Trần Thị E</span>
-                                                            </div>
-                                                        </td>
-                                                        <td>Chủ hộ</td>
-                                                        <td>12/12/1982</td>
-                                                        <td>Nữ</td>
-                                                        <td>001082123460</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="resident-info">
-                                                                <div class="resident-avatar"><i class="fas fa-user"></i></div>
-                                                                <span>Lê Văn F</span>
-                                                            </div>
-                                                        </td>
-                                                        <td>Chồng</td>
-                                                        <td>25/02/1980</td>
-                                                        <td>Nam</td>
-                                                        <td>001080123461</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="resident-info">
-                                                                <div class="resident-avatar"><i class="fas fa-user"></i></div>
-                                                                <span>Lê Thị G</span>
-                                                            </div>
-                                                        </td>
-                                                        <td>Con gái</td>
-                                                        <td>30/09/2012</td>
-                                                        <td>Nữ</td>
-                                                        <td>001012123462</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <!-- Dòng 3 -->
-                                <tr class="household-header" data-household="3">
-                                    <td>3</td>
-                                    <td>HK003</td>
-                                    <td>Lê Văn H</td>
-                                    <td>Căn hộ A0302, BlueMoon Apartment</td>
-                                    <td>5</td>
-                                    <td>10/08/2023</td>
-                                    <td><span class="status-badge status-active">Hoạt động</span></td>
-                                    <td>
-                                        <button class="action-btn action-btn-view" title="Xem chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="action-btn" title="Chỉnh sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="action-btn action-btn-delete" title="Xóa">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <!-- Thành viên của hộ khẩu 3 (mặc định ẩn) -->
-                                <tr class="resident-row" data-household="3" style="display: none;">
-                                    <td colspan="8">
-                                        <div class="ps-4">
-                                            <table class="w-100">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Họ tên</th>
-                                                        <th>Quan hệ với chủ hộ</th>
-                                                        <th>Ngày sinh</th>
-                                                        <th>Giới tính</th>
-                                                        <th>CCCD/CMND</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="resident-info">
-                                                                <div class="resident-avatar"><i class="fas fa-user"></i></div>
-                                                                <span>Lê Văn H</span>
-                                                            </div>
-                                                        </td>
-                                                        <td>Chủ hộ</td>
-                                                        <td>05/04/1970</td>
-                                                        <td>Nam</td>
-                                                        <td>001070123463</td>
-                                                    </tr>
-                                                    <!-- Thêm các thành viên khác của hộ khẩu 3 -->
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </td>
-                                </tr>
+                                <% if (typeof hokhauList !== 'undefined' && hokhauList && hokhauList.length > 0) { %>
+                                    <% hokhauList.forEach(function(hokhau, index) { %>
+                                        <tr class="household-header" data-household="<%= hokhau._id %>">
+                                            <td><%= index + 1 %></td>
+                                            <td><%= hokhau.soHoKhau %></td>
+                                            <td><%= hokhau.hoTenChuHo %></td>
+                                            <td><%= hokhau.diaChi %></td>
+                                            <td>0</td> <!-- Số thành viên, cần tính toán thêm nếu cần -->
+                                            <td><%= hokhau.ngayLamHoKhau ? new Date(hokhau.ngayLamHoKhau).toLocaleDateString('vi-VN') : '-' %></td>
+                                            <td><span class="status-badge status-active">Hoạt động</span></td>
+                                            <td>
+                                                <a href="/toquan/hokhau/<%= hokhau._id %>" class="action-btn action-btn-view" title="Xem chi tiết">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="/toquan/hokhau/<%= hokhau._id %>/edit" class="action-btn" title="Chỉnh sửa">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button class="action-btn action-btn-delete" title="Xóa" data-id="<%= hokhau._id %>">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="8" class="text-center">
+                                            <div class="empty-state">
+                                                <i class="fas fa-inbox"></i>
+                                                <h3 class="empty-state-title">Không có dữ liệu hộ khẩu</h3>
+                                                <p class="empty-state-text">Chưa có hộ khẩu nào được đăng ký. Vui lòng thêm hộ khẩu mới bằng cách nhấn vào nút "Thêm hộ khẩu".</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% } %>
                             </tbody>
                         </table>
                     </div>
@@ -860,9 +677,10 @@
             </div>
 
             <!-- Pagination -->
+            <% if (typeof hokhauList !== 'undefined' && hokhauList && hokhauList.length > 0) { %>
             <div class="pagination-container">
                 <div class="pagination-info">
-                    Hiển thị 1-3 / 10 hộ khẩu
+                    Hiển thị 1-<%= Math.min(hokhauList.length, 10) %> / <%= hokhauList.length %> hộ khẩu
                 </div>
                 <div class="pagination">
                     <button class="page-btn disabled">
@@ -872,24 +690,31 @@
                         <i class="fas fa-angle-left"></i>
                     </button>
                     <button class="page-btn active">1</button>
-                    <button class="page-btn">2</button>
-                    <button class="page-btn">3</button>
-                    <button class="page-btn">4</button>
-                    <button class="page-btn">
+                    <% if (hokhauList.length > 10) { %>
+                        <button class="page-btn">2</button>
+                    <% } %>
+                    <% if (hokhauList.length > 20) { %>
+                        <button class="page-btn">3</button>
+                    <% } %>
+                    <% if (hokhauList.length > 30) { %>
+                        <button class="page-btn">4</button>
+                    <% } %>
+                    <button class="page-btn <%= hokhauList.length <= 10 ? 'disabled' : '' %>">
                         <i class="fas fa-angle-right"></i>
                     </button>
-                    <button class="page-btn">
+                    <button class="page-btn <%= hokhauList.length <= 10 ? 'disabled' : '' %>">
                         <i class="fas fa-angle-double-right"></i>
                     </button>
                 </div>
             </div>
+            <% } %>
         </div>
 
         <!-- Nhân Khẩu Tab Content (Hidden by default) -->
         <div class="tab-content" id="nhankhau-content" style="display: none;">
             <!-- Search Box -->
             <div class="search-container">
-                <input type="text" class="search-box" placeholder="Tìm kiếm nhân khẩu theo tên, CCCD/CMND...">
+                <input type="text" class="search-box" id="nhankhau-search" placeholder="Tìm kiếm nhân khẩu theo tên, CCCD/CMND...">
                 <i class="fas fa-search search-icon"></i>
             </div>
 
@@ -912,109 +737,17 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>1</td>
-                                    <td>
-                                        <div class="resident-info">
-                                            <div class="resident-avatar"><i class="fas fa-user"></i></div>
-                                            <span>Nguyễn Văn A</span>
+                                    <td colspan="8" class="text-center">
+                                        <div class="empty-state">
+                                            <i class="fas fa-user-slash"></i>
+                                            <h3 class="empty-state-title">Không có dữ liệu nhân khẩu</h3>
+                                            <p class="empty-state-text">Chưa có nhân khẩu nào được đăng ký. Vui lòng thêm nhân khẩu mới bằng cách nhấn vào nút "Thêm nhân khẩu".</p>
                                         </div>
                                     </td>
-                                    <td>HK001</td>
-                                    <td>Chủ hộ</td>
-                                    <td>10/05/1975</td>
-                                    <td>Nam</td>
-                                    <td>001075123456</td>
-                                    <td>
-                                        <button class="action-btn action-btn-view" title="Xem chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="action-btn" title="Chỉnh sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="action-btn action-btn-delete" title="Xóa">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
                                 </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>
-                                        <div class="resident-info">
-                                            <div class="resident-avatar"><i class="fas fa-user"></i></div>
-                                            <span>Nguyễn Thị B</span>
-                                        </div>
-                                    </td>
-                                    <td>HK001</td>
-                                    <td>Vợ</td>
-                                    <td>15/08/1980</td>
-                                    <td>Nữ</td>
-                                    <td>001080123457</td>
-                                    <td>
-                                        <button class="action-btn action-btn-view" title="Xem chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="action-btn" title="Chỉnh sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="action-btn action-btn-delete" title="Xóa">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>3</td>
-                                    <td>
-                                        <div class="resident-info">
-                                            <div class="resident-avatar"><i class="fas fa-user"></i></div>
-                                            <span>Trần Thị E</span>
-                                        </div>
-                                    </td>
-                                    <td>HK002</td>
-                                    <td>Chủ hộ</td>
-                                    <td>12/12/1982</td>
-                                    <td>Nữ</td>
-                                    <td>001082123460</td>
-                                    <td>
-                                        <button class="action-btn action-btn-view" title="Xem chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="action-btn" title="Chỉnh sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="action-btn action-btn-delete" title="Xóa">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <!-- Thêm các dòng khác cho nhân khẩu -->
                             </tbody>
                         </table>
                     </div>
-                </div>
-            </div>
-
-            <!-- Pagination -->
-            <div class="pagination-container">
-                <div class="pagination-info">
-                    Hiển thị 1-3 / 12 nhân khẩu
-                </div>
-                <div class="pagination">
-                    <button class="page-btn disabled">
-                        <i class="fas fa-angle-double-left"></i>
-                    </button>
-                    <button class="page-btn disabled">
-                        <i class="fas fa-angle-left"></i>
-                    </button>
-                    <button class="page-btn active">1</button>
-                    <button class="page-btn">2</button>
-                    <button class="page-btn">3</button>
-                    <button class="page-btn">4</button>
-                    <button class="page-btn">
-                        <i class="fas fa-angle-right"></i>
-                    </button>
-                    <button class="page-btn">
-                        <i class="fas fa-angle-double-right"></i>
-                    </button>
                 </div>
             </div>
         </div>
@@ -1023,6 +756,15 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Hiển thị debug info trong development
+            const debugSection = document.querySelector('.debug-section');
+            if (debugSection) {
+                // Ẩn debug section sau 10 giây
+                setTimeout(() => {
+                    debugSection.style.display = 'none';
+                }, 10000);
+            }
+            
             // Tab Switching
             const hokhauTab = document.getElementById('hokhau-tab');
             const nhankhauTab = document.getElementById('nhankhau-tab');
@@ -1052,7 +794,7 @@
                     const residentRows = document.querySelectorAll(`.resident-row[data-household="${householdId}"]`);
                     
                     residentRows.forEach(row => {
-                        if (row.style.display === 'none') {
+                        if (row.style.display === 'none' || !row.style.display) {
                             row.style.display = 'table-row';
                             header.classList.add('expanded');
                         } else {
@@ -1064,44 +806,67 @@
             });
             
             // Search functionality for household table
-            const hokhauSearch = document.querySelector('#hokhau-content .search-box');
-            hokhauSearch.addEventListener('keyup', function() {
-                const searchValue = this.value.toLowerCase();
-                const householdRows = document.querySelectorAll('#hokhau-content .household-header');
-                
-                householdRows.forEach(row => {
-                    const sohokhau = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                    const chuho = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-                    const diachi = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+            const hokhauSearch = document.getElementById('hokhau-search');
+            if (hokhauSearch) {
+                hokhauSearch.addEventListener('keyup', function() {
+                    const searchValue = this.value.toLowerCase();
+                    const householdRows = document.querySelectorAll('#hokhau-content .household-header');
                     
-                    if (sohokhau.includes(searchValue) || chuho.includes(searchValue) || diachi.includes(searchValue)) {
-                        row.style.display = 'table-row';
-                    } else {
-                        row.style.display = 'none';
-                        // Hide related resident rows
-                        const householdId = row.getAttribute('data-household');
-                        const relatedRows = document.querySelectorAll(`.resident-row[data-household="${householdId}"]`);
-                        relatedRows.forEach(relatedRow => {
-                            relatedRow.style.display = 'none';
-                        });
-                    }
+                    householdRows.forEach(row => {
+                        const sohokhau = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                        const chuho = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                        const diachi = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+                        
+                        if (sohokhau.includes(searchValue) || chuho.includes(searchValue) || diachi.includes(searchValue)) {
+                            row.style.display = 'table-row';
+                        } else {
+                            row.style.display = 'none';
+                            // Hide related resident rows
+                            const householdId = row.getAttribute('data-household');
+                            const relatedRows = document.querySelectorAll(`.resident-row[data-household="${householdId}"]`);
+                            relatedRows.forEach(relatedRow => {
+                                relatedRow.style.display = 'none';
+                            });
+                        }
+                    });
                 });
-            });
+            }
             
             // Search functionality for resident table
-            const nhankhauSearch = document.querySelector('#nhankhau-content .search-box');
-            nhankhauSearch.addEventListener('keyup', function() {
-                const searchValue = this.value.toLowerCase();
-                const residentRows = document.querySelectorAll('#nhankhau-content tbody tr');
-                
-                residentRows.forEach(row => {
-                    const hoten = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                    const cccd = row.querySelector('td:nth-child(7)').textContent.toLowerCase();
+            const nhankhauSearch = document.getElementById('nhankhau-search');
+            if (nhankhauSearch) {
+                nhankhauSearch.addEventListener('keyup', function() {
+                    const searchValue = this.value.toLowerCase();
+                    const residentRows = document.querySelectorAll('#nhankhau-content tbody tr');
                     
-                    if (hoten.includes(searchValue) || cccd.includes(searchValue)) {
-                        row.style.display = 'table-row';
-                    } else {
-                        row.style.display = 'none';
+                    residentRows.forEach(row => {
+                        // Skip if it's an empty state row
+                        if (row.querySelector('td[colspan="8"]')) {
+                            return;
+                        }
+                        
+                        const hoten = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                        const cccd = row.querySelector('td:nth-child(7)').textContent.toLowerCase();
+                        
+                        if (hoten.includes(searchValue) || cccd.includes(searchValue)) {
+                            row.style.display = 'table-row';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            }
+            
+            // Xóa hộ khẩu
+            const deleteButtons = document.querySelectorAll('.action-btn-delete');
+            deleteButtons.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Ngăn hiệu ứng click vào hộ khẩu
+                    
+                    const id = this.getAttribute('data-id');
+                    if (confirm('Bạn có chắc chắn muốn xóa hộ khẩu này?')) {
+                        // Thực hiện xóa (có thể dùng fetch API để gọi server)
+                        window.location.href = `/toquan/hokhau/${id}/delete`;
                     }
                 });
             });

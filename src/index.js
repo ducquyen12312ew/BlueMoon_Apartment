@@ -1022,13 +1022,14 @@ app.get("/toquan/biendoi", ensureAuthenticated, ensureToQuan, async (req, res) =
 // Route cho trang hộ khẩu-nhân khẩu
 app.get("/toquan/hokhau-nhankhau", ensureAuthenticated, ensureToQuan, async (req, res) => {
     try {
-        // Lấy tổng số hộ khẩu và nhân khẩu để hiển thị ở trang
-        const totalHoKhau = await HoKhauCollection.countDocuments();
-        const totalNhanKhau = await NhanKhauCollection.countDocuments();
+        // Lấy danh sách hộ khẩu để hiển thị
+        const hokhauList = await HoKhauCollection.find().sort({ soHoKhau: 1 });
+        console.log(`Found ${hokhauList.length} households`); // Thêm dòng debug này
         
         res.render("hokhau-nhankhau", {
-            totalHoKhau,
-            totalNhanKhau
+            totalHoKhau: hokhauList.length,
+            totalNhanKhau: await NhanKhauCollection.countDocuments(),
+            hokhauList: hokhauList // Thêm hokhauList vào data truyền cho template
         });
     } catch (error) {
         console.error("Error loading household management:", error);
