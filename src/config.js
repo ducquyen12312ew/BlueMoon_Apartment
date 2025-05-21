@@ -1,14 +1,24 @@
+/**
+ * BlueMoon Apartment Management System
+ * Database Configuration and Schema Definitions
+ */
 const mongoose = require('mongoose');
+
+// Database connection
 const connect = mongoose.connect("mongodb://0.0.0.0:27017/BlueMoonApartment");
 
 connect.then(() => {
     console.log("Database Connected Successfully");
-    // Ensure admin account exists
+    // Initialize default data
     createDefaultAdmin();
 })
-.catch(() => {
-    console.log("Database cannot be Connected");
+.catch((err) => {
+    console.log("Database cannot be Connected:", err.message);
 });
+
+//=============================================================================
+// SCHEMA DEFINITIONS
+//=============================================================================
 
 // User Schema - Admin role for apartment management
 const UserSchema = new mongoose.Schema({
@@ -25,6 +35,10 @@ const UserSchema = new mongoose.Schema({
     },
     phone: {
         type: String
+    },
+    position: {
+        type: String,
+        default: 'Quản lý'
     },
     role: {
         type: String,
@@ -58,12 +72,20 @@ const ApartmentSchema = new mongoose.Schema({
         required: true
     },
     area: {
-        type: Number,  // in square feet
+        type: Number,  // in square meters
         required: true
     },
     isOccupied: {
         type: Boolean,
         default: false
+    },
+    status: {
+        type: String,
+        enum: ['Đã bàn giao', 'Chưa bàn giao', 'Đang sửa chữa'],
+        default: 'Chưa bàn giao'
+    },
+    handoverDate: {
+        type: Date
     },
     createdAt: {
         type: Date,
@@ -83,6 +105,31 @@ const ResidentSchema = new mongoose.Schema({
         ref: 'apartments',
         required: true
     },
+    fullName: {
+        type: String,
+        required: true
+    },
+    gender: {
+        type: String,
+        enum: ['Nam', 'Nữ', 'Khác']
+    },
+    phone: {
+        type: String
+    },
+    email: {
+        type: String
+    },
+    birthdate: {
+        type: Date
+    },
+    idNumber: {
+        type: String
+    },
+    residentType: {
+        type: String,
+        enum: ['Chủ sở hữu', 'Thành viên gia đình', 'Người thuê'],
+        default: 'Chủ sở hữu'
+    },
     moveInDate: {
         type: Date,
         default: Date.now
@@ -90,16 +137,21 @@ const ResidentSchema = new mongoose.Schema({
     leaseEndDate: {
         type: Date
     },
-    isOwner: {
+    isActive: {
         type: Boolean,
-        default: false
+        default: true
     },
     familyMembers: [{
         name: String,
         relationship: String,
         age: Number
     }],
+    notes: String,
     createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
         type: Date,
         default: Date.now
     }
@@ -142,6 +194,9 @@ const MaintenanceRequestSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    scheduledDate: {
+        type: Date
     },
     completedAt: {
         type: Date
@@ -231,7 +286,7 @@ const NoticeSchema = new mongoose.Schema({
     }
 });
 
-// Khoản Thu Schema (Mới)
+// Khoản Thu Schema
 const KhoanThuSchema = new mongoose.Schema({
     maKhoanThu: {
         type: String,
@@ -267,7 +322,7 @@ const KhoanThuSchema = new mongoose.Schema({
     }
 });
 
-// Nộp Tiền Schema (Mới)
+// Nộp Tiền Schema
 const NopTienSchema = new mongoose.Schema({
     khoanThu: {
         type: mongoose.Schema.Types.ObjectId,
@@ -309,7 +364,7 @@ const NopTienSchema = new mongoose.Schema({
     }
 });
 
-// HoKhau Schema (Household) - Moved to module level
+// HoKhau Schema (Household)
 const HoKhauSchema = new mongoose.Schema({
     soHoKhau: {
         type: String,
@@ -324,6 +379,9 @@ const HoKhauSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    khuVuc: {
+        type: String
+    },
     ngayLamHoKhau: {
         type: Date,
         default: Date.now
@@ -333,7 +391,7 @@ const HoKhauSchema = new mongoose.Schema({
     }
 });
 
-// NhanKhau Schema (Resident) - Moved to module level
+// NhanKhau Schema (Resident)
 const NhanKhauSchema = new mongoose.Schema({
     hoTen: {
         type: String,
@@ -358,10 +416,12 @@ const NhanKhauSchema = new mongoose.Schema({
         type: String
     },
     danToc: {
-        type: String
+        type: String,
+        default: 'Kinh'
     },
     tonGiao: {
-        type: String
+        type: String,
+        default: 'Không'
     },
     ngheNghiep: {
         type: String
@@ -397,7 +457,7 @@ const NhanKhauSchema = new mongoose.Schema({
     }
 });
 
-// TamTru Schema (Temporary Residence) - Moved to module level
+// TamTru Schema (Temporary Residence)
 const TamTruSchema = new mongoose.Schema({
     nhanKhau: {
         type: mongoose.Schema.Types.ObjectId,
@@ -426,7 +486,7 @@ const TamTruSchema = new mongoose.Schema({
     }
 });
 
-// TamVang Schema (Temporary Absence) - Moved to module level
+// TamVang Schema (Temporary Absence)
 const TamVangSchema = new mongoose.Schema({
     nhanKhau: {
         type: mongoose.Schema.Types.ObjectId,
@@ -455,7 +515,7 @@ const TamVangSchema = new mongoose.Schema({
     }
 });
 
-// BienDoiNhanKhau Schema (Population Changes) - Moved to module level
+// BienDoiNhanKhau Schema (Population Changes)
 const BienDoiNhanKhauSchema = new mongoose.Schema({
     nhanKhau: {
         type: mongoose.Schema.Types.ObjectId,
@@ -484,7 +544,42 @@ const BienDoiNhanKhauSchema = new mongoose.Schema({
     }
 });
 
-// Create models from schemas - All at module level
+// Maintenance Staff Schema (New)
+const MaintenanceStaffSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true
+    },
+    position: {
+        type: String,
+        required: true
+    },
+    specialization: {
+        type: String
+    },
+    phone: {
+        type: String
+    },
+    email: {
+        type: String
+    },
+    isAvailable: {
+        type: Boolean,
+        default: true
+    },
+    joinDate: {
+        type: Date,
+        default: Date.now
+    },
+    skills: [String],
+    notes: String
+});
+
+//=============================================================================
+// MODEL CREATION
+//=============================================================================
+
+// Create models from schemas
 const UserCollection = mongoose.model("users", UserSchema);
 const ApartmentCollection = mongoose.model("apartments", ApartmentSchema);
 const ResidentCollection = mongoose.model("residents", ResidentSchema);
@@ -498,6 +593,11 @@ const NhanKhauCollection = mongoose.model("nhankhau", NhanKhauSchema);
 const TamTruCollection = mongoose.model("tamtru", TamTruSchema);
 const TamVangCollection = mongoose.model("tamvang", TamVangSchema);
 const BienDoiNhanKhauCollection = mongoose.model("biendoinhankhau", BienDoiNhanKhauSchema);
+const MaintenanceStaffCollection = mongoose.model("maintenanceStaff", MaintenanceStaffSchema);
+
+//=============================================================================
+// INITIALIZATION FUNCTIONS
+//=============================================================================
 
 // Function to create default admin account if none exists
 async function createDefaultAdmin() {
@@ -505,13 +605,49 @@ async function createDefaultAdmin() {
         const adminExists = await UserCollection.findOne({ role: 'admin' });
         if (!adminExists) {
             await UserCollection.create({
-                name: 'admin',
+                name: 'Admin',
                 password: '123456789',
                 role: 'admin',
-                email: 'admin@apartmentmanagement.com'
+                email: 'admin@bluemoonapartment.com',
+                phone: '0123456789',
+                position: 'Quản lý'
             });
             
             console.log('Default admin account created');
+        }
+
+        // Add maintenance staff if none exist
+        const staffExists = await UserCollection.countDocuments({ position: { $ne: 'Quản lý' } });
+        if (staffExists === 0) {
+            const maintenanceStaff = [
+                {
+                    name: 'Nguyễn Văn A',
+                    password: '123456789',
+                    role: 'admin',
+                    email: 'nguyenvana@bluemoonapartment.com',
+                    phone: '0909123456',
+                    position: 'Kỹ thuật viên'
+                },
+                {
+                    name: 'Trần Thị B',
+                    password: '123456789',
+                    role: 'admin',
+                    email: 'tranthib@bluemoonapartment.com',
+                    phone: '0909234567',
+                    position: 'Kỹ thuật viên'
+                },
+                {
+                    name: 'Lê Văn C',
+                    password: '123456789',
+                    role: 'admin',
+                    email: 'levanc@bluemoonapartment.com',
+                    phone: '0909345678',
+                    position: 'Bảo vệ'
+                }
+            ];
+            
+            await UserCollection.insertMany(maintenanceStaff);
+            console.log('Maintenance staff accounts created');
         }
 
         // Create sample data for demo
@@ -538,7 +674,9 @@ async function createSampleData() {
                             block,
                             type: unit <= 2 ? '2BHK' : '3BHK',
                             area: unit <= 2 ? 75 : 100,
-                            isOccupied: Math.random() > 0.2 // 80% occupied
+                            isOccupied: Math.random() > 0.2, // 80% occupied
+                            status: Math.random() > 0.3 ? 'Đã bàn giao' : 'Chưa bàn giao',
+                            handoverDate: Math.random() > 0.3 ? new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000) : null
                         };
                         apartments.push(apartment);
                     }
@@ -546,6 +684,97 @@ async function createSampleData() {
             }
             await ApartmentCollection.insertMany(apartments);
             console.log('Sample apartments created');
+        }
+
+        // Create sample maintenance requests if none exist
+        const maintenanceExist = await MaintenanceRequestCollection.countDocuments();
+        if (maintenanceExist === 0) {
+            // Get admin user and apartments
+            const admin = await UserCollection.findOne({ role: 'admin' });
+            const apartments = await ApartmentCollection.find().limit(10);
+            
+            if (admin && apartments.length > 0) {
+                // Sample maintenance titles and descriptions
+                const maintenanceTitles = [
+                    "Sửa chữa đường ống nước",
+                    "Thay thế bóng đèn",
+                    "Sửa chữa điều hòa",
+                    "Bảo trì thang máy",
+                    "Sửa chữa cửa ra vào",
+                    "Thay thế vòi nước",
+                    "Sửa chữa hệ thống điện",
+                    "Bảo trì thiết bị phòng tắm",
+                    "Sửa chữa rò rỉ nước",
+                    "Thay thế ổ khóa"
+                ];
+                
+                const maintenanceDescriptions = [
+                    "Đường ống nước trong phòng tắm bị rò rỉ, gây ngập nước và ảnh hưởng đến căn hộ tầng dưới.",
+                    "Các bóng đèn trong phòng khách và phòng ngủ đã hết tuổi thọ và cần được thay thế.",
+                    "Điều hòa không hoạt động bình thường, không làm mát hoặc phát ra tiếng ồn lớn.",
+                    "Thang máy cần được bảo trì định kỳ để đảm bảo an toàn cho cư dân.",
+                    "Cửa ra vào bị kẹt, khó đóng mở và phát ra tiếng ồn khi sử dụng.",
+                    "Vòi nước trong nhà bếp bị rò rỉ và cần được thay thế.",
+                    "Hệ thống điện trong căn hộ có dấu hiệu không ổn định, đèn nhấp nháy.",
+                    "Các thiết bị trong phòng tắm cần được bảo trì, bao gồm vòi sen và bồn rửa.",
+                    "Phát hiện rò rỉ nước từ trần nhà, có thể do đường ống nước tầng trên bị hỏng.",
+                    "Ổ khóa cửa chính bị hỏng, không thể khóa hoặc mở bình thường."
+                ];
+                
+                const priorities = ['low', 'medium', 'high', 'emergency'];
+                const statuses = ['pending', 'in-progress', 'completed', 'cancelled'];
+                
+                // Generate 10 random maintenance requests
+                const maintenanceRequests = [];
+                
+                for (let i = 0; i < 10; i++) {
+                    // Select a random apartment
+                    const randomApartment = apartments[Math.floor(Math.random() * apartments.length)];
+                    
+                    // Generate random dates
+                    const today = new Date();
+                    const pastDate = new Date(today);
+                    pastDate.setDate(pastDate.getDate() - Math.floor(Math.random() * 30)); // Random date in last 30 days
+                    
+                    const futureDate = new Date(today);
+                    futureDate.setDate(futureDate.getDate() + Math.floor(Math.random() * 14)); // Random date in next 14 days
+                    
+                    // Select random title and description
+                    const randomIndex = Math.floor(Math.random() * maintenanceTitles.length);
+                    const title = maintenanceTitles[randomIndex];
+                    const description = maintenanceDescriptions[randomIndex];
+                    
+                    // Select random priority and status
+                    const priority = priorities[Math.floor(Math.random() * priorities.length)];
+                    const status = statuses[Math.floor(Math.random() * statuses.length)];
+                    
+                    // Create maintenance request object
+                    const request = {
+                        apartment: randomApartment._id,
+                        requestedBy: admin._id,
+                        title,
+                        description,
+                        priority,
+                        status,
+                        createdAt: pastDate,
+                        assignedTo: status !== 'pending' ? admin._id : null,
+                        scheduledDate: status !== 'pending' ? futureDate : null,
+                        completedAt: status === 'completed' ? today : null,
+                        notes: [
+                            {
+                                text: `Yêu cầu bảo trì được tạo bởi ${admin.name}`,
+                                addedBy: admin._id,
+                                addedAt: pastDate
+                            }
+                        ]
+                    };
+                    
+                    maintenanceRequests.push(request);
+                }
+                
+                await MaintenanceRequestCollection.insertMany(maintenanceRequests);
+                console.log('Sample maintenance requests created');
+            }
         }
 
         // Create sample khoản thu if none exist
@@ -627,8 +856,7 @@ async function createSampleData() {
     }
 }
 
-
-// Export models - All models defined above can now be exported
+// Export models for use in other files
 module.exports = { 
     UserCollection, 
     ApartmentCollection, 
@@ -642,5 +870,6 @@ module.exports = {
     NhanKhauCollection,
     TamTruCollection,
     TamVangCollection,
-    BienDoiNhanKhauCollection
+    BienDoiNhanKhauCollection,
+    MaintenanceStaffCollection
 };
