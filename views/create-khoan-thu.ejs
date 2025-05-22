@@ -563,7 +563,37 @@
                 padding: 0;
             }
         }
+        .btn-outline-primary {
+            background-color: white;
+            border: 1px solid var(--primary-blue);
+            color: var(--primary-blue);
+            border-left: none;
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+            padding: 10px 15px;
+            transition: all 0.3s;
+        }
         
+        .btn-outline-primary:hover {
+            background-color: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+        
+        .btn-outline-primary:focus {
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+        
+        .form-text {
+            font-size: 12px;
+            margin-top: 5px;
+            color: #6c757d;
+        }
+        
+        .border-success {
+            border-color: #28a745 !important;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
         @media (max-width: 768px) {
             .sidebar {
                 width: 200px;
@@ -707,12 +737,18 @@
                     <form id="khoanThuForm" action="/khoan-thu/create" method="POST">
                         <input type="hidden" id="editId" name="editId" value="">
                         
-                        <!-- Form Row 1 -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="maKhoanThu" class="form-label required-field">Mã khoản thu</label>
-                                    <input type="text" class="form-control" id="maKhoanThu" name="maKhoanThu" placeholder="Nhập mã khoản thu" required>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="maKhoanThu" name="maKhoanThu" placeholder="Mã sẽ được tạo tự động" readonly required>
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-primary" id="btnGenerateCode" title="Tạo mã mới">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -886,7 +922,7 @@
                 handleFormSubmit();
             });
         });
-
+        
         // Helper function to get current formatted date
         function getCurrentFormattedDate() {
             const today = new Date();
@@ -1158,6 +1194,151 @@
                 $('.alert').fadeOut();
             }, 5000);
         }
+        // Hàm tạo mã khoản thu ngắn (theo thời gian)
+function generateShortFeeCode() {
+    const now = new Date();
+    const year = String(now.getFullYear()).slice(-2); // 2 số cuối của năm
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    
+    // Tạo số random 3 chữ số
+    const randomNum = Math.floor(Math.random() * 900) + 100;
+    
+    // Tạo mã với format: KT + YYMM + 3 số random
+    const code = `KT${year}${month}${randomNum}`;
+    
+    return code;
+}
+
+// Hàm tạo mã khoản thu dài (theo thời gian)
+function generateLongFeeCode() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    
+    // Tạo số random 3 chữ số
+    const randomNum = Math.floor(Math.random() * 900) + 100;
+    
+    // Tạo mã với format: BM + YYYYMMDD + 3 số random
+    const code = `BM${year}${month}${day}${randomNum}`;
+    
+    return code;
+}
+
+// Hàm tạo mã hoàn toàn random
+function generateFullRandomCode() {
+    // Random prefix từ danh sách
+    const prefixes = ['KT', 'BM', 'PH', 'TC', 'QL', 'DV'];
+    const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    
+    // Random 6-8 số
+    const randomLength = Math.floor(Math.random() * 3) + 6; // 6, 7, hoặc 8 số
+    let randomNumbers = '';
+    
+    for (let i = 0; i < randomLength; i++) {
+        randomNumbers += Math.floor(Math.random() * 10);
+    }
+    
+    return `${randomPrefix}${randomNumbers}`;
+}
+
+// Hàm tạo mã random với format cố định
+function generateRandomWithFormat() {
+    // Random 2 chữ cái đầu
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const randomLetter1 = letters[Math.floor(Math.random() * letters.length)];
+    const randomLetter2 = letters[Math.floor(Math.random() * letters.length)];
+    
+    // Random 6 số
+    const randomNumbers = Math.floor(Math.random() * 900000) + 100000; // 6 chữ số
+    
+    return `${randomLetter1}${randomLetter2}${randomNumbers}`;
+}
+
+// Hàm tạo mã kiểu UUID ngắn
+function generateShortUUID() {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = '';
+    
+    // Tạo 8 ký tự random
+    for (let i = 0; i < 8; i++) {
+        result += chars[Math.floor(Math.random() * chars.length)];
+    }
+    
+    // Thêm prefix để dễ nhận biết
+    return `KT${result}`;
+}
+
+// Hàm chính tạo mã - CHỌN LOẠI TẠI ĐÂY
+function generateRandomCode() {
+    // Có thể chọn 1 trong các hàm sau:
+    
+    // return generateShortFeeCode();     // KT2412001 (theo thời gian)
+    // return generateLongFeeCode();      // BM20241225001 (theo thời gian)
+    // return generateFullRandomCode();   // KT123456789 (hoàn toàn random)
+    // return generateRandomWithFormat(); // AB123456 (2 chữ + 6 số)
+    return generateShortUUID();           // KT8A7B9C2D (8 ký tự random)
+}
+
+// Khởi tạo khi document ready
+$(document).ready(function() {
+    // Tạo mã tự động khi load trang
+    const initialCode = generateRandomCode();
+    console.log("Generated initial code:", initialCode);
+    $("#maKhoanThu").val(initialCode);
+    
+    // Xử lý sự kiện click nút generate
+    $("#btnGenerateCode").on('click', function() {
+        console.log("Generate button clicked");
+        
+        // Tạo mã mới
+        const newCode = generateRandomCode();
+        console.log("New code generated:", newCode);
+        
+        // Gán vào input
+        $("#maKhoanThu").val(newCode);
+        
+        // Hiệu ứng spin cho icon
+        const icon = $(this).find('i');
+        icon.addClass('fa-spin');
+        
+        // Hiệu ứng thành công cho input
+        const input = $("#maKhoanThu");
+        input.addClass('border-success');
+        
+        // Xóa hiệu ứng sau 1 giây
+        setTimeout(function() {
+            icon.removeClass('fa-spin');
+            input.removeClass('border-success');
+        }, 1000);
+        
+        // Thông báo đã tạo mã mới
+        console.log("Code updated successfully");
+    });
+    
+    // Debug: Kiểm tra nút có tồn tại không
+    if ($("#btnGenerateCode").length === 0) {
+        console.error("Button #btnGenerateCode not found!");
+    } else {
+        console.log("Button #btnGenerateCode found successfully");
+    }
+    
+    // Debug: Kiểm tra input có tồn tại không
+    if ($("#maKhoanThu").length === 0) {
+        console.error("Input #maKhoanThu not found!");
+    } else {
+        console.log("Input #maKhoanThu found successfully");
+    }
+});
+
+// Test function - gọi từ console để test
+function testGenerateCode() {
+    const code = generateRandomCode();
+    console.log("Test generated code:", code);
+    $("#maKhoanThu").val(code);
+    return code;
+}
     </script>
 </body>
 </html>
+

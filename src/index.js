@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const session = require('express-session');
+const puppeteer = require('puppeteer'); 
 const { 
     UserCollection, 
     ApartmentCollection, 
@@ -2934,9 +2935,6 @@ app.post("/cudan/feedback/submit", ensureAuthenticated, ensureCuDan, async (req,
         res.status(500).send("Error submitting feedback: " + error.message);
     }
 });
-
-//======== TEAM LEADER (TOQUAN) FEEDBACK MANAGEMENT ROUTES ========//
-// Display team leader feedback management page
 app.get("/toquan/bao-cao", ensureAuthenticated, ensureToQuan, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -2959,6 +2957,14 @@ app.get("/toquan/bao-cao", ensureAuthenticated, ensureToQuan, async (req, res) =
             .skip(skip)
             .limit(limit);
         
+        // Get session messages
+        const feedbackSuccess = req.session.feedbackSuccess;
+        const feedbackError = req.session.feedbackError;
+        
+        // Clear session messages after getting them
+        delete req.session.feedbackSuccess;
+        delete req.session.feedbackError;
+        
         res.render("toquan-bao-cao", {
             feedbackList,
             pendingCount,
@@ -2966,7 +2972,9 @@ app.get("/toquan/bao-cao", ensureAuthenticated, ensureToQuan, async (req, res) =
             resolvedCount,
             rejectedCount,
             currentPage: page,
-            totalPages
+            totalPages,
+            feedbackSuccess,
+            feedbackError
         });
     } catch (error) {
         console.error("Error loading feedback management:", error);
@@ -2974,37 +2982,27 @@ app.get("/toquan/bao-cao", ensureAuthenticated, ensureToQuan, async (req, res) =
     }
 });
 
-// Get feedback details for modal
-app.get("/toquan/bao-cao/:id", ensureAuthenticated, ensureToQuan, async (req, res) => {
-    try {
-        const feedback = await FeedbackCollection.findById(req.params.id);
-        
-        if (!feedback) {
-            return res.status(404).json({ error: "Phản ánh không tồn tại" });
-        }
-        
-        res.json(feedback);
-    } catch (error) {
-        console.error("Error getting feedback details:", error);
-        res.status(500).json({ error: "Error getting feedback details" });
-    }
-});
-
-// Respond to feedback
+// Cập nhật route POST /toquan/bao-cao/respond
 app.post("/toquan/bao-cao/respond", ensureAuthenticated, ensureToQuan, async (req, res) => {
     try {
         const { feedbackId, status, responseText } = req.body;
         
+        console.log("Received feedback response:", { feedbackId, status, responseText });
+        
         // Validate required fields
         if (!feedbackId || !status) {
-            return res.status(400).send("Missing required fields");
+            console.log("Missing required fields");
+            req.session.feedbackError = "Thiếu thông tin bắt buộc";
+            return res.redirect("/toquan/bao-cao");
         }
         
         // Update feedback
         const feedback = await FeedbackCollection.findById(feedbackId);
         
         if (!feedback) {
-            return res.status(404).send("Phản ánh không tồn tại");
+            console.log("Feedback not found:", feedbackId);
+            req.session.feedbackError = "Phản ánh không tồn tại";
+            return res.redirect("/toquan/bao-cao");
         }
         
         feedback.status = status;
@@ -3022,10 +3020,354 @@ app.post("/toquan/bao-cao/respond", ensureAuthenticated, ensureToQuan, async (re
         
         await feedback.save();
         
+        console.log("Feedback updated successfully:", feedback._id);
+        
+        // Set success message
+        req.session.feedbackSuccess = "Phản hồi đã được gửi thành công! Cư dân sẽ nhận được thông báo về cập nhật này.";
         res.redirect("/toquan/bao-cao");
     } catch (error) {
         console.error("Error responding to feedback:", error);
-        res.status(500).send("Error responding to feedback: " + error.message);
+        req.session.feedbackError = "Lỗi khi gửi phản hồi: " + error.message;
+        res.redirect("/toquan/bao-cao");
+    }
+});
+
+// Route AJAX để cập nhật trạng thái nhanh
+app.post("/toquan/bao-cao/:id/update-status", ensureAuthenticated, ensureToQuan, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const feedbackId = req.params.id;
+        
+        if (!status) {
+            return res.status(400).json({ error: "Trạng thái không được để trống" });
+        }
+        
+        const feedback = await FeedbackCollection.findById(feedbackId);
+        
+        if (!feedback) {
+            return res.status(404).json({ error: "Phản ánh không tồn tại" });
+        }
+        
+        const oldStatus = feedback.status;
+        feedback.status = status;
+        feedback.updatedAt = new Date();
+        
+        // Add a simple response message when status is updated
+        let statusMessage = "";
+        switch(status) {
+            case 'in-progress':
+                statusMessage = "Phản ánh của bạn đang được xử lý.";
+                break;
+            case 'resolved':
+                statusMessage = "Phản ánh của bạn đã được giải quyết.";
+                break;
+            case 'rejected':
+                statusMessage = "Phản ánh của bạn đã bị từ chối.";
+                break;
+            default:
+                statusMessage = "Trạng thái phản ánh đã được cập nhật.";
+        }
+        
+        if (!feedback.response || !feedback.response.text) {
+            feedback.response = {
+                text: statusMessage,
+                respondedBy: req.session.name,
+                respondedAt: new Date()
+            };
+        }
+        
+        await feedback.save();
+        
+        console.log(`Status updated from ${oldStatus} to ${status} for feedback ${feedbackId}`);
+        
+        res.json({ 
+            success: true, 
+            message: "Cập nhật trạng thái thành công",
+            oldStatus,
+            newStatus: status
+        });
+    } catch (error) {
+        console.error("Error updating feedback status:", error);
+        res.status(500).json({ error: "Lỗi khi cập nhật trạng thái: " + error.message });
+    }
+});
+
+// Route in biên lai - THÊM MỚI
+app.get("/print-receipt/:id", ensureAuthenticated, ensureAdmin, async (req, res) => {
+    try {
+        const paymentId = req.params.id;
+        
+        // Tìm thông tin thanh toán
+        const payment = await NopTienCollection.findById(paymentId).populate('khoanThu');
+        
+        if (!payment) {
+            return res.status(404).send("Không tìm thấy thông tin thanh toán");
+        }
+
+        // Tạo HTML template cho biên lai
+        const receiptHTML = `
+        <!DOCTYPE html>
+        <html lang="vi">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Biên lai thu tiền</title>
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                
+                body {
+                    font-family: 'Times New Roman', Times, serif;
+                    line-height: 1.6;
+                    color: #333;
+                    background: white;
+                    padding: 20px;
+                }
+                
+                .receipt-container {
+                    max-width: 800px;
+                    margin: 0 auto;
+                    border: 2px solid #333;
+                    padding: 30px;
+                    position: relative;
+                }
+                
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 2px solid #333;
+                    padding-bottom: 20px;
+                }
+                
+                .company-name {
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #4e73df;
+                    margin-bottom: 5px;
+                }
+                
+                .company-address {
+                    font-size: 14px;
+                    margin-bottom: 10px;
+                }
+                
+                .receipt-title {
+                    font-size: 28px;
+                    font-weight: bold;
+                    margin-top: 15px;
+                    color: #333;
+                }
+                
+                .receipt-number {
+                    font-size: 16px;
+                    margin-top: 10px;
+                    font-style: italic;
+                }
+                
+                .content {
+                    margin: 30px 0;
+                }
+                
+                .info-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 15px;
+                    font-size: 16px;
+                }
+                
+                .info-label {
+                    font-weight: bold;
+                    min-width: 200px;
+                }
+                
+                .info-value {
+                    flex: 1;
+                    border-bottom: 1px dotted #333;
+                    padding-bottom: 2px;
+                    margin-left: 10px;
+                }
+                
+                .amount-section {
+                    background-color: #f8f9fc;
+                    border: 2px solid #4e73df;
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin: 30px 0;
+                    text-align: center;
+                }
+                
+                .amount-number {
+                    font-size: 32px;
+                    font-weight: bold;
+                    color: #4e73df;
+                    margin-bottom: 10px;
+                }
+                
+                .amount-words {
+                    font-size: 18px;
+                    font-style: italic;
+                    color: #333;
+                }
+                
+                .signature-section {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 50px;
+                    text-align: center;
+                }
+                
+                .signature-box {
+                    flex: 1;
+                    margin: 0 20px;
+                }
+                
+                .signature-title {
+                    font-weight: bold;
+                    margin-bottom: 80px;
+                    font-size: 16px;
+                }
+                
+                .signature-name {
+                    border-top: 1px solid #333;
+                    padding-top: 10px;
+                    font-style: italic;
+                }
+                
+                .footer {
+                    margin-top: 30px;
+                    text-align: center;
+                    font-size: 12px;
+                    color: #666;
+                    border-top: 1px solid #ddd;
+                    padding-top: 15px;
+                }
+                
+                .watermark {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%) rotate(-45deg);
+                    font-size: 60px;
+                    color: rgba(78, 115, 223, 0.1);
+                    font-weight: bold;
+                    z-index: -1;
+                    pointer-events: none;
+                }
+                
+                @media print {
+                    body { margin: 0; padding: 0; }
+                    .receipt-container { border: none; margin: 0; padding: 20px; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="receipt-container">
+                <div class="watermark">BLUEMOON</div>
+                
+                <div class="header">
+                    <div class="company-name">CHUNG CƯ BLUE MOON</div>
+                    <div class="company-address">
+                        Địa chỉ: 123 Đường ABC, Quận XYZ, Thành phố Hà Nội<br>
+                        Điện thoại: (024) 1234-5678 | Email: info@bluemoon.vn
+                    </div>
+                    <div class="receipt-title">BIÊN LAI THU TIỀN</div>
+                    <div class="receipt-number">Số: ${payment._id.toString().slice(-8).toUpperCase()}</div>
+                </div>
+                
+                <div class="content">
+                    <div class="info-row">
+                        <span class="info-label">Họ và tên người nộp:</span>
+                        <span class="info-value">${payment.tenNguoiNop}</span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Căn hộ:</span>
+                        <span class="info-value">${payment.canHo || 'N/A'}</span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Nội dung thu:</span>
+                        <span class="info-value">${payment.khoanThu ? payment.khoanThu.tenKhoanThu : 'N/A'}</span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Ngày nộp:</span>
+                        <span class="info-value">${new Date(payment.ngayNop).toLocaleDateString('vi-VN')}</span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Phương thức thanh toán:</span>
+                        <span class="info-value">${getPaymentMethodText(payment.phuongThucThanhToan)}</span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Người thu:</span>
+                        <span class="info-value">${payment.nguoiThu}</span>
+                    </div>
+                </div>
+                
+                <div class="amount-section">
+                    <div class="amount-number">${payment.soTien.toLocaleString('vi-VN')} VNĐ</div>
+                    <div class="amount-words">Bằng chữ: ${numberToWords(payment.soTien)} đồng</div>
+                </div>
+                
+                <div class="signature-section">
+                    <div class="signature-box">
+                        <div class="signature-title">NGƯỜI NỘP TIỀN</div>
+                        <div class="signature-name">${payment.tenNguoiNop}</div>
+                    </div>
+                    
+                    <div class="signature-box">
+                        <div class="signature-title">NGƯỜI THU TIỀN</div>
+                        <div class="signature-name">${payment.nguoiThu}</div>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p>Biên lai này được tạo tự động bởi hệ thống quản lý chung cư Blue Moon</p>
+                    <p>Ngày in: ${new Date().toLocaleString('vi-VN')}</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        // Tạo PDF bằng puppeteer
+        const browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        
+        const page = await browser.newPage();
+        await page.setContent(receiptHTML, { waitUntil: 'networkidle0' });
+        
+        const pdf = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: {
+                top: '20px',
+                bottom: '20px',
+                left: '20px',
+                right: '20px'
+            }
+        });
+        
+        await browser.close();
+        
+        // Trả về PDF để xem trước (không tải xuống)
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': 'inline; filename="bien-lai-' + payment._id + '.pdf"'
+        });
+        
+        res.send(pdf);
+        
+    } catch (error) {
+        console.error("Error generating receipt:", error);
+        res.status(500).send("Lỗi khi tạo biên lai: " + error.message);
     }
 });
 
@@ -3078,6 +3420,79 @@ function ensureToPho(req, res, next) {
         return next();
     }
     res.status(403).send("Access Denied: Team Leader privileges required");
+}
+function getPaymentMethodText(method) {
+    switch(method) {
+        case 'cash': return 'Tiền mặt';
+        case 'bank': return 'Chuyển khoản';
+        case 'qr': return 'Quét mã QR';
+        default: return 'Tiền mặt';
+    }
+}
+
+function numberToWords(num) {
+    if (num === 0) return "không";
+    
+    const ones = ["", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
+    const tens = ["", "", "hai mươi", "ba mươi", "bốn mươi", "năm mươi", "sáu mươi", "bảy mươi", "tám mươi", "chín mươi"];
+    const hundreds = ["", "một trăm", "hai trăm", "ba trăm", "bốn trăm", "năm trăm", "sáu trăm", "bảy trăm", "tám trăm", "chín trăm"];
+    
+    function convertGroupOfThree(n) {
+        let result = "";
+        
+        const hundred = Math.floor(n / 100);
+        const ten = Math.floor((n % 100) / 10);
+        const one = n % 10;
+        
+        if (hundred > 0) {
+            result += hundreds[hundred];
+        }
+        
+        if (ten > 1) {
+            result += (result ? " " : "") + tens[ten];
+            if (one > 0) {
+                result += " " + ones[one];
+            }
+        } else if (ten === 1) {
+            result += (result ? " " : "") + "mười";
+            if (one > 0) {
+                result += " " + ones[one];
+            }
+        } else if (one > 0) {
+            result += (result ? " " : "") + "lẻ " + ones[one];
+        }
+        
+        return result;
+    }
+    
+    if (num < 1000) {
+        return convertGroupOfThree(num);
+    }
+    
+    const billion = Math.floor(num / 1000000000);
+    const million = Math.floor((num % 1000000000) / 1000000);
+    const thousand = Math.floor((num % 1000000) / 1000);
+    const remainder = num % 1000;
+    
+    let result = "";
+    
+    if (billion > 0) {
+        result += convertGroupOfThree(billion) + " tỷ";
+    }
+    
+    if (million > 0) {
+        result += (result ? " " : "") + convertGroupOfThree(million) + " triệu";
+    }
+    
+    if (thousand > 0) {
+        result += (result ? " " : "") + convertGroupOfThree(thousand) + " nghìn";
+    }
+    
+    if (remainder > 0) {
+        result += (result ? " " : "") + convertGroupOfThree(remainder);
+    }
+    
+    return result.trim();
 }
 // Start the server
 const port = process.env.PORT || 5000;

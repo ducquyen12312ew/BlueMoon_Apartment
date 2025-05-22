@@ -235,8 +235,8 @@
         }
         
         .search-input:focus {
-            border-color: var(--primary-blue);
-            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(42, 157, 143, 0.25);
             outline: none;
         }
         
@@ -264,6 +264,7 @@
             flex-direction: column;
             height: 100%;
             transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
         }
         
         .feedback-card:hover {
@@ -372,7 +373,7 @@
         }
         
         .view-details-btn {
-            background-color: var(--primary-blue);
+            background-color: var(--primary-color);
             color: white;
             border: none;
             padding: 5px 10px;
@@ -383,7 +384,7 @@
         }
         
         .view-details-btn:hover {
-            background-color: var(--dark-blue);
+            background-color: var(--secondary-color);
             color: white;
             text-decoration: none;
         }
@@ -411,25 +412,25 @@
             padding: 8px 12px;
             border-radius: 5px;
             border: 1px solid #ced4da;
-            color: var(--primary-blue);
+            color: var(--primary-color);
             text-decoration: none;
             transition: all 0.3s;
         }
         
         .page-item.active .page-link {
-            background-color: var(--primary-blue);
+            background-color: var(--primary-color);
             color: white;
-            border-color: var(--primary-blue);
+            border-color: var(--primary-color);
         }
         
         .page-link:hover {
             background-color: #e9ecef;
-            color: var(--dark-blue);
+            color: var(--secondary-color);
         }
         
         /* Modal Styles */
         .feedback-modal .modal-header {
-            background-color: var(--primary-blue);
+            background-color: var(--primary-color);
             color: white;
         }
         
@@ -464,7 +465,7 @@
         .response-heading {
             font-weight: 600;
             margin-bottom: 15px;
-            color: var(--dark-blue);
+            color: var(--secondary-color);
         }
         
         .status-select {
@@ -481,9 +482,31 @@
         }
         
         .response-textarea:focus {
-            border-color: var(--primary-blue);
-            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(42, 157, 143, 0.25);
             outline: none;
+        }
+        
+        /* Alert styles */
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+            border-left-color: #28a745;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+            border-left-color: #dc3545;
         }
         
         /* Responsive Styles */
@@ -595,6 +618,21 @@
     
     <!-- Main Content -->
     <div class="main-content">
+        <!-- Success/Error Messages -->
+        <% if (typeof feedbackSuccess !== 'undefined' && feedbackSuccess) { %>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                <%= feedbackSuccess %>
+            </div>
+        <% } %>
+        
+        <% if (typeof feedbackError !== 'undefined' && feedbackError) { %>
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <%= feedbackError %>
+            </div>
+        <% } %>
+        
         <div class="content-header">
             <h1 class="page-title">Quản lý phản ánh kiến nghị</h1>
             <div class="filter-container">
@@ -750,7 +788,7 @@
                 <ul class="pagination">
                     <% if (currentPage > 1) { %>
                         <li class="page-item">
-                            <a class="page-link" href="/toquan/feedback?page=<%= currentPage - 1 %>">
+                            <a class="page-link" href="/toquan/bao-cao?page=<%= currentPage - 1 %>">
                                 <i class="fas fa-chevron-left"></i>
                             </a>
                         </li>
@@ -758,13 +796,13 @@
                     
                     <% for (let i = 1; i <= totalPages; i++) { %>
                         <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-                            <a class="page-link" href="/toquan/feedback?page=<%= i %>"><%= i %></a>
+                            <a class="page-link" href="/toquan/bao-cao?page=<%= i %>"><%= i %></a>
                         </li>
                     <% } %>
                     
                     <% if (currentPage < totalPages) { %>
                         <li class="page-item">
-                            <a class="page-link" href="/toquan/feedback?page=<%= currentPage + 1 %>">
+                            <a class="page-link" href="/toquan/bao-cao?page=<%= currentPage + 1 %>">
                                 <i class="fas fa-chevron-right"></i>
                             </a>
                         </li>
@@ -783,7 +821,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="responseForm" action="/toquan/feedback/respond" method="POST">
+                    <form id="responseForm" action="/toquan/bao-cao/respond" method="POST">
                         <input type="hidden" id="feedbackId" name="feedbackId">
                         
                         <div class="feedback-detail-block">
@@ -905,12 +943,10 @@
                 
                 // Check if any cards are visible
                 if ($('.feedback-card:visible').length === 0) {
-                    // No cards visible, show message
                     if ($('.no-results-message').length === 0) {
                         $('.feedback-list').append('<div class="no-results-message col-12"><div class="alert alert-info">Không tìm thấy phản ánh kiến nghị nào phù hợp với bộ lọc.</div></div>');
                     }
                 } else {
-                    // Remove no results message if it exists
                     $('.no-results-message').remove();
                 }
             }
@@ -930,91 +966,78 @@
                 const button = $(event.relatedTarget);
                 const feedbackId = button.data('id');
                 
+                if (!feedbackId) {
+                    console.error("No feedback ID found");
+                    return;
+                }
+                
+                const modal = $(this);
+                modal.find('#feedbackId').val(feedbackId);
+                
                 // Find the feedback data from the card
                 const card = $(`.feedback-card[data-id="${feedbackId}"]`);
                 
                 if (card.length) {
-                    // Get the modal
-                    const modal = $(this);
+                    // Get data from the card directly
+                    const title = card.find('.feedback-title').text().trim();
+                    const apartment = card.find('.feedback-apartment').text().replace('Căn hộ: ', '').trim();
+                    const description = card.find('.feedback-description').text().trim();
+                    const category = card.find('.feedback-category').text().trim();
+                    const status = card.data('status');
                     
-                    // Update hidden input
-                    modal.find('#feedbackId').val(feedbackId);
+                    // Populate modal with basic info
+                    modal.find('#modalTitle').text(title);
+                    modal.find('#modalApartment').text(apartment);
+                    modal.find('#modalDescription').text(description);
+                    modal.find('#modalCategory').text(category);
+                    modal.find('#responseStatus').val(status);
                     
-                    // We need to make an AJAX call to get the full feedback details
-                    $.ajax({
-                        url: `/toquan/feedback/${feedbackId}`,
-                        method: 'GET',
-                        dataType: 'json',
-                        success: function(data) {
-                            // Populate modal with feedback details
-                            modal.find('#modalTitle').text(data.title || '');
-                            modal.find('#modalResident').text(data.resident || '');
-                            modal.find('#modalApartment').text(data.apartment || '');
-                            
-                            // Format date
-                            const createdDate = new Date(data.createdAt);
-                            const formattedDate = createdDate.toLocaleDateString('vi-VN', { 
-                                year: 'numeric', 
-                                month: '2-digit', 
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            });
-                            modal.find('#modalDate').text(formattedDate);
-                            
-                            // Set category
-                            let categoryText = "";
-                            switch(data.category) {
-                                case 'maintenance': categoryText = "Bảo trì, sửa chữa"; break;
-                                case 'security': categoryText = "An ninh, an toàn"; break;
-                                case 'neighbor': categoryText = "Vấn đề hàng xóm"; break;
-                                case 'facilities': categoryText = "Tiện ích chung"; break;
-                                case 'payment': categoryText = "Vấn đề thanh toán"; break;
-                                case 'other': categoryText = "Khác"; break;
-                            }
-                            modal.find('#modalCategory').text(categoryText);
-                            
-                            // Set description
-                            modal.find('#modalDescription').text(data.description || '');
-                            
-                            // Set existing response if available
-                            if (data.response && data.response.text) {
-                                modal.find('#existingResponse').removeClass('d-none');
-                                modal.find('#modalResponse').text(data.response.text || '');
-                                modal.find('#modalRespondedBy').text(data.response.respondedBy || '');
-                                
-                                // Format response date
-                                const respondedDate = new Date(data.response.respondedAt);
-                                const formattedRespondedDate = respondedDate.toLocaleDateString('vi-VN', { 
-                                    year: 'numeric', 
-                                    month: '2-digit', 
-                                    day: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                });
-                                modal.find('#modalRespondedAt').text(formattedRespondedDate);
-                                
-                                // Pre-fill response form with existing data
-                                modal.find('#responseStatus').val(data.status);
-                                modal.find('#responseText').val(data.response.text);
-                            } else {
-                                modal.find('#existingResponse').addClass('d-none');
-                                modal.find('#responseStatus').val(data.status);
-                                modal.find('#responseText').val('');
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.error("Error fetching feedback details:", error);
-                            alert("Không thể tải thông tin phản ánh. Vui lòng thử lại sau.");
-                        }
-                    });
+                    // Set resident name (this would come from backend in real app)
+                    modal.find('#modalResident').text('Cư dân ' + apartment);
+                    
+                    // Set date (this would come from backend in real app)
+                    const dateElement = card.find('.feedback-date').text().trim();
+                    modal.find('#modalDate').text(dateElement);
+                    
+                    // For now, just show modal without AJAX call
+                    modal.find('#existingResponse').addClass('d-none');
+                    modal.find('#responseText').val('');
+                } else {
+                    console.error("Card not found for feedback ID:", feedbackId);
+                    alert("Không thể tải thông tin phản ánh.");
                 }
             });
             
             // Handle response submission
             $('#submitResponse').click(function() {
+                const status = $('#responseStatus').val();
+                const responseText = $('#responseText').val().trim();
+                
+                if (!status) {
+                    alert('Vui lòng chọn trạng thái');
+                    return;
+                }
+                
+                if (!responseText) {
+                    alert('Vui lòng nhập nội dung phản hồi');
+                    return;
+                }
+                
                 $('#responseForm').submit();
             });
+            
+            // Clear session messages after showing them
+            <% if (typeof feedbackSuccess !== 'undefined' && feedbackSuccess) { %>
+                setTimeout(function() {
+                    $('.alert-success').fadeOut();
+                }, 5000);
+            <% } %>
+            
+            <% if (typeof feedbackError !== 'undefined' && feedbackError) { %>
+                setTimeout(function() {
+                    $('.alert-danger').fadeOut();
+                }, 5000);
+            <% } %>
         });
     </script>
 </body>

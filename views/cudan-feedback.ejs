@@ -271,6 +271,12 @@
             margin-bottom: 20px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .feedback-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
         
         .feedback-header {
@@ -315,6 +321,7 @@
             padding: 15px;
             border-radius: 5px;
             border-left: 3px solid var(--primary-color);
+            margin-top: 15px;
         }
         
         .feedback-response-header {
@@ -324,6 +331,17 @@
             margin-bottom: 10px;
             font-weight: 500;
             color: var(--dark-color);
+        }
+        
+        .feedback-response-text {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .response-meta {
+            font-size: 12px;
+            color: #6c757d;
+            font-style: italic;
         }
         
         .feedback-status {
@@ -354,6 +372,46 @@
             color: #721c24;
         }
         
+        /* New status indicator for updates */
+        .status-updated {
+            position: relative;
+        }
+        
+        .status-updated::after {
+            content: "Mới";
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background-color: #dc3545;
+            color: white;
+            font-size: 8px;
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-weight: bold;
+        }
+        
+        /* Filter section */
+        .filter-section {
+            margin: 20px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            min-width: 150px;
+        }
+        
         /* Responsive Styles */
         @media (max-width: 992px) {
             .form-row {
@@ -382,6 +440,16 @@
             .btn {
                 width: 100%;
             }
+            
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-select {
+                width: 100%;
+                margin-bottom: 10px;
+            }
         }
         
         @media (max-width: 576px) {
@@ -406,6 +474,15 @@
             
             .main-content {
                 margin-left: 70px;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .current-date {
+                margin-top: 10px;
             }
         }
     </style>
@@ -520,13 +597,38 @@
             </div>
         </div>
         
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-row">
+                <label>Lọc theo trạng thái:</label>
+                <select id="statusFilter" class="filter-select">
+                    <option value="all">Tất cả</option>
+                    <option value="pending">Chờ xử lý</option>
+                    <option value="in-progress">Đang xử lý</option>
+                    <option value="resolved">Đã giải quyết</option>
+                    <option value="rejected">Từ chối</option>
+                </select>
+                
+                <label>Lọc theo loại:</label>
+                <select id="categoryFilter" class="filter-select">
+                    <option value="all">Tất cả loại</option>
+                    <option value="maintenance">Bảo trì, sửa chữa</option>
+                    <option value="security">An ninh, an toàn</option>
+                    <option value="neighbor">Vấn đề hàng xóm</option>
+                    <option value="facilities">Tiện ích chung</option>
+                    <option value="payment">Vấn đề thanh toán</option>
+                    <option value="other">Khác</option>
+                </select>
+            </div>
+        </div>
+        
         <!-- Previous Feedback List -->
         <div class="feedback-list">
-            <h2 class="mb-4">Phản ánh đã gửi</h2>
+            <h2 class="mb-4">Phản ánh đã gửi (<%= feedbackList ? feedbackList.length : 0 %>)</h2>
             
             <% if (feedbackList && feedbackList.length > 0) { %>
                 <% feedbackList.forEach(function(feedback) { %>
-                    <div class="feedback-card">
+                    <div class="feedback-card" data-status="<%= feedback.status %>" data-category="<%= feedback.category %>">
                         <div class="feedback-header">
                             <div>
                                 <h3 class="feedback-title">
@@ -544,10 +646,24 @@
                                     %>
                                     <span class="feedback-category"><%= categoryText %></span>
                                 </h3>
+                                <div class="feedback-date">
+                                    <i class="far fa-calendar-alt me-1"></i> 
+                                    Gửi ngày: <%= new Date(feedback.createdAt).toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) %>
+                                </div>
                             </div>
                             <% 
                                 let statusClass = "";
                                 let statusText = "";
+                                let isRecentlyUpdated = false;
+                                
+                                // Check if feedback was updated recently (within last 24 hours)
+                                if (feedback.updatedAt) {
+                                    const now = new Date();
+                                    const updated = new Date(feedback.updatedAt);
+                                    const diffHours = (now - updated) / (1000 * 60 * 60);
+                                    isRecentlyUpdated = diffHours <= 24;
+                                }
+                                
                                 switch(feedback.status) {
                                     case 'pending': 
                                         statusClass = "status-pending"; 
@@ -567,28 +683,64 @@
                                         break;
                                 }
                             %>
-                            <span class="feedback-status <%= statusClass %>"><%= statusText %></span>
+                            <span class="feedback-status <%= statusClass %> <%= isRecentlyUpdated ? 'status-updated' : '' %>">
+                                <%= statusText %>
+                            </span>
                         </div>
                         <div class="feedback-body">
-                            <div class="feedback-date">
-                                <i class="far fa-calendar-alt me-1"></i> 
-                                <%= new Date(feedback.createdAt).toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' }) %>
-                            </div>
-                            <div class="feedback-description mt-3">
+                            <div class="feedback-description">
+                                <strong>Nội dung phản ánh:</strong><br>
                                 <%= feedback.description %>
                             </div>
                             
                             <% if (feedback.response && feedback.response.text) { %>
                                 <div class="feedback-response">
                                     <div class="feedback-response-header">
-                                        <span>Phản hồi từ Ban quản lý</span>
-                                        <span class="feedback-date">
-                                            <i class="far fa-calendar-alt"></i> 
-                                            <%= new Date(feedback.response.respondedAt).toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' }) %>
-                                        </span>
+                                        <span><i class="fas fa-reply me-2"></i>Phản hồi từ Ban quản lý</span>
+                                        <% if (isRecentlyUpdated) { %>
+                                            <span class="badge bg-danger">Mới cập nhật</span>
+                                        <% } %>
                                     </div>
-                                    <%= feedback.response.text %>
+                                    <div class="feedback-response-text">
+                                        <%= feedback.response.text %>
+                                    </div>
+                                    <div class="response-meta">
+                                        Phản hồi bởi <%= feedback.response.respondedBy || 'Ban quản lý' %> vào 
+                                        <%= new Date(feedback.response.respondedAt).toLocaleDateString('vi-VN', { 
+                                            year: 'numeric', 
+                                            month: '2-digit', 
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        }) %>
+                                    </div>
                                 </div>
+                            <% } else { %>
+                                <% if (feedback.status !== 'pending') { %>
+                                    <div class="feedback-response">
+                                        <div class="feedback-response-header">
+                                            <span><i class="fas fa-info-circle me-2"></i>Cập nhật trạng thái</span>
+                                        </div>
+                                        <div class="feedback-response-text">
+                                            <% if (feedback.status === 'in-progress') { %>
+                                                Phản ánh của bạn đang được xử lý. Chúng tôi sẽ liên hệ với bạn sớm nhất có thể.
+                                            <% } else if (feedback.status === 'resolved') { %>
+                                                Phản ánh của bạn đã được giải quyết. Cảm ơn bạn đã đóng góp ý kiến.
+                                            <% } else if (feedback.status === 'rejected') { %>
+                                                Phản ánh của bạn đã được xem xét và không thể thực hiện tại thời điểm này.
+                                            <% } %>
+                                        </div>
+                                        <div class="response-meta">
+                                            Cập nhật lúc: <%= new Date(feedback.updatedAt).toLocaleDateString('vi-VN', { 
+                                                year: 'numeric', 
+                                                month: '2-digit', 
+                                                day: '2-digit',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            }) %>
+                                        </div>
+                                    </div>
+                                <% } %>
                             <% } %>
                         </div>
                     </div>
@@ -650,6 +802,53 @@
                     event.preventDefault();
                 }
             });
+            
+            // Filter functionality
+            function applyFilters() {
+                const statusFilter = $('#statusFilter').val();
+                const categoryFilter = $('#categoryFilter').val();
+                
+                $('.feedback-card').each(function() {
+                    const card = $(this);
+                    const cardStatus = card.data('status');
+                    const cardCategory = card.data('category');
+                    
+                    // Check status filter
+                    const statusMatch = statusFilter === 'all' || cardStatus === statusFilter;
+                    
+                    // Check category filter
+                    const categoryMatch = categoryFilter === 'all' || cardCategory === categoryFilter;
+                    
+                    // Show/hide card based on filters
+                    if (statusMatch && categoryMatch) {
+                        card.show();
+                    } else {
+                        card.hide();
+                    }
+                });
+                
+                // Update count
+                const visibleCount = $('.feedback-card:visible').length;
+                const totalCount = $('.feedback-card').length;
+                $('.feedback-list h2').text(`Phản ánh đã gửi (${visibleCount}/${totalCount})`);
+            }
+            
+            // Apply filters on change
+            $('#statusFilter, #categoryFilter').change(function() {
+                applyFilters();
+            });
+            
+            // Auto-refresh page every 5 minutes to check for updates
+            setInterval(function() {
+                // Only refresh if user is not actively filling the form
+                const formHasContent = $('#title').val().trim() || $('#description').val().trim();
+                if (!formHasContent) {
+                    location.reload();
+                }
+            }, 300000); // 5 minutes
+            
+            // Highlight recently updated items
+            $('.status-updated').closest('.feedback-card').css('border-left', '5px solid #dc3545');
         });
     </script>
 </body>
