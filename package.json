@@ -13,8 +13,12 @@
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-session": "^1.18.1",
+<<<<<<< HEAD
     "mongoose": "^8.14.1",
     "puppeteer": "^24.9.0"
+=======
+    "mongoose": "^8.15.0"
+>>>>>>> 1138d376c5607d147880e9836f48c0efa729e344
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
