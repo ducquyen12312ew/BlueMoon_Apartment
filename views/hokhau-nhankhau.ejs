@@ -309,6 +309,21 @@
             color: var(--dark-color);
         }
         
+        .status-pending {
+            background-color: rgba(233, 196, 106, 0.1);
+            color: var(--light-color);
+        }
+        
+        .status-approved {
+            background-color: rgba(42, 157, 143, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .status-rejected {
+            background-color: rgba(231, 111, 81, 0.1);
+            color: var(--dark-color);
+        }
+        
         /* Action Buttons */
         .action-btn {
             display: inline-flex;
@@ -392,6 +407,12 @@
             color: #6c757d;
         }
         
+        /* Header Actions */
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
         /* Pagination */
         .pagination-container {
             display: flex;
@@ -471,13 +492,13 @@
             margin-bottom: 20px;
         }
         
-        /* Debug Section */
-        .debug-section {
-            background-color: #f8f9fc; 
-            padding: 10px; 
-            margin-bottom: 20px; 
-            border: 1px solid #ccc;
-            border-radius: 5px;
+        /* Tab content visibility */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
         }
         
         /* Responsive Styles */
@@ -549,10 +570,6 @@
                 <i class="fas fa-house-user"></i>
                 <span>Quản lý hộ khẩu</span>
             </a>
-            <a href="/toquan/tamtrutamvang" class="menu-item">
-                <i class="fas fa-exchange-alt"></i>
-                <span>Tạm trú tạm vắng</span>
-            </a>
             <a href="/toquan/thongke" class="menu-item">
                 <i class="fas fa-chart-bar"></i>
                 <span>Thống kê</span>
@@ -572,23 +589,13 @@
 
     <!-- Main Content -->
     <div class="main-content">
-        <!-- Debug section để phát hiện dữ liệu -->
-        <div class="debug-section">
-            <h4>Debug Info:</h4>
-            <p>Total Hộ Khẩu: <%= typeof totalHoKhau !== 'undefined' ? totalHoKhau : 'undefined' %></p>
-            <p>hokhauList: <%= typeof hokhauList !== 'undefined' ? (hokhauList ? 'Defined with ' + hokhauList.length + ' items' : 'Defined but null/empty') : 'undefined' %></p>
-            <% if (typeof hokhauList !== 'undefined' && hokhauList && hokhauList.length > 0) { %>
-                <p>First household: <%= hokhauList[0].soHoKhau %> - <%= hokhauList[0].hoTenChuHo %></p>
-            <% } %>
-        </div>
-
         <div class="page-header">
             <div class="page-title-container">
                 <h1 class="page-title">
                     <i class="fas fa-house-user"></i>
                     Quản Lý Hộ Khẩu & Nhân Khẩu
                 </h1>
-                <p class="page-subtitle">Quản lý thông tin hộ khẩu và nhân khẩu trong chung cư</p>
+                <p class="page-subtitle">Quản lý thông tin hộ khẩu, nhân khẩu và tạm trú tạm vắng trong chung cư</p>
             </div>
             <div class="header-actions">
                 <a href="/toquan/hokhau/add" class="btn-action">
@@ -604,10 +611,11 @@
         <div class="tab-navigation">
             <button class="tab-btn active" id="hokhau-tab">Hộ khẩu</button>
             <button class="tab-btn" id="nhankhau-tab">Nhân khẩu</button>
+            <button class="tab-btn" id="tamtru-tab">Tạm trú tạm vắng</button>
         </div>
 
         <!-- Hộ Khẩu Tab Content -->
-        <div class="tab-content" id="hokhau-content">
+        <div class="tab-content active" id="hokhau-content">
             <!-- Search Box -->
             <div class="search-container">
                 <input type="text" class="search-box" id="hokhau-search" placeholder="Tìm kiếm hộ khẩu theo số, chủ hộ hoặc địa chỉ...">
@@ -695,81 +703,311 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Pagination -->
-            <% if (typeof hokhauList !== 'undefined' && hokhauList && hokhauList.length > 0) { %>
-            <div class="pagination-container">
-                <div class="pagination-info">
-                    Hiển thị 1-<%= Math.min(hokhauList.length, 10) %> / <%= hokhauList.length %> hộ khẩu
-                </div>
-                <div class="pagination">
-                    <button class="page-btn disabled">
-                        <i class="fas fa-angle-double-left"></i>
-                    </button>
-                    <button class="page-btn disabled">
-                        <i class="fas fa-angle-left"></i>
-                    </button>
-                    <button class="page-btn active">1</button>
-                    <% if (hokhauList.length > 10) { %>
-                        <button class="page-btn">2</button>
-                    <% } %>
-                    <% if (hokhauList.length > 20) { %>
-                        <button class="page-btn">3</button>
-                    <% } %>
-                    <% if (hokhauList.length > 30) { %>
-                        <button class="page-btn">4</button>
-                    <% } %>
-                    <button class="page-btn <%= hokhauList.length <= 10 ? 'disabled' : '' %>">
-                        <i class="fas fa-angle-right"></i>
-                    </button>
-                    <button class="page-btn <%= hokhauList.length <= 10 ? 'disabled' : '' %>">
-                        <i class="fas fa-angle-double-right"></i>
-                    </button>
-                </div>
-            </div>
-            <% } %>
         </div>
 
-        <!-- Nhân Khẩu Tab Content (Hidden by default) -->
-        <div class="tab-content" id="nhankhau-content" style="display: none;">
+        <!-- Nhân Khẩu Tab Content -->
+        <div class="tab-content" id="nhankhau-content">
             <!-- Search Box -->
             <div class="search-container">
                 <input type="text" class="search-box" id="nhankhau-search" placeholder="Tìm kiếm nhân khẩu theo tên, CCCD/CMND...">
                 <i class="fas fa-search search-icon"></i>
             </div>
 
+            <!-- Nhân Khẩu Table -->
+            <div class="content-card">
+                <div class="content-card-body">
+                    <div class="table-responsive">
+                        <table class="custom-table" id="nhankhau-table">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Họ tên</th>
+                                    <th>Ngày sinh</th>
+                                    <th>Giới tính</th>
+                                    <th>Hộ khẩu</th>
+                                    <th>Quan hệ với chủ hộ</th>
+                                    <th>CCCD/CMND</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (typeof nhankhauList !== 'undefined' && nhankhauList && nhankhauList.length > 0) { %>
+                                    <% nhankhauList.forEach(function(nhankhau, index) { %>
+                                        <tr>
+                                            <td><%= index + 1 %></td>
+                                            <td>
+                                                <div class="resident-info">
+                                                    <div class="resident-avatar">
+                                                        <i class="fas fa-user"></i>
+                                                    </div>
+                                                    <span><%= nhankhau.hoTen %></span>
+                                                </div>
+                                            </td>
+                                            <td><%= nhankhau.ngaySinh ? new Date(nhankhau.ngaySinh).toLocaleDateString('vi-VN') : '-' %></td>
+                                            <td><%= nhankhau.gioiTinh %></td>
+                                            <td><%= nhankhau.hoKhau ? nhankhau.hoKhau.soHoKhau : '-' %></td>
+                                            <td><%= nhankhau.quanHeVoiChuHo %></td>
+                                            <td><%= nhankhau.cccd || '-' %></td>
+                                            <td>
+                                                <a href="/toquan/nhankhau/<%= nhankhau._id %>" class="action-btn action-btn-view" title="Xem chi tiết">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="/toquan/nhankhau/<%= nhankhau._id %>/edit" class="action-btn" title="Chỉnh sửa">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button class="action-btn action-btn-delete" title="Xóa" onclick="confirmDeleteNhanKhau('<%= nhankhau._id %>')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="8" class="text-center">
+                                            <div class="empty-state">
+                                                <i class="fas fa-users"></i>
+                                                <h3 class="empty-state-title">Không có dữ liệu nhân khẩu</h3>
+                                                <p class="empty-state-text">Chưa có nhân khẩu nào được đăng ký. Vui lòng thêm nhân khẩu mới bằng cách nhấn vào nút "Thêm nhân khẩu".</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tạm Trú Tạm Vắng Tab Content -->
+        <div class="tab-content" id="tamtru-content">
+            <div class="header-actions" style="margin-bottom: 20px;">
+                <a href="/toquan/tamtru/add" class="btn-action">
+                    <i class="fas fa-plus"></i> Đăng ký tạm trú
+                </a>
+                <a href="/toquan/tamvang/add" class="btn-action" style="background-color: var(--secondary-color);">
+                    <i class="fas fa-plus"></i> Đăng ký tạm vắng
+                </a>
+            </div>
+
+            <!-- Sub Tab Navigation for Temporary Residence -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" id="tamtru-sub-tab">Tạm trú</button>
+                <button class="tab-btn" id="tamvang-sub-tab">Tạm vắng</button>
+            </div>
+
+            <!-- Tạm Trú Content -->
+            <div class="tab-content active" id="tamtru-sub-content">
+                <!-- Search Box -->
+                <div class="search-container">
+                    <input type="text" class="search-box" id="tamtru-search" placeholder="Tìm kiếm tạm trú...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+
+                <!-- Tạm Trú Table -->
+                <div class="content-card">
+                    <div class="content-card-body">
+                        <div class="table-responsive">
+                            <table class="custom-table" id="tamtru-table">
+                                <thead>
+                                    <tr>
+                                        <th>STT</th>
+                                        <th>Người đăng ký</th>
+                                        <th>Địa chỉ tạm trú</th>
+                                        <th>Thời gian</th>
+                                        <th>Lý do</th>
+                                        <th>Trạng thái</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (typeof tamTruList !== 'undefined' && tamTruList && tamTruList.length > 0) { %>
+                                        <% tamTruList.forEach((tamTru, index) => { %>
+                                            <tr>
+                                                <td><%= index + 1 %></td>
+                                                <td>
+                                                    <div class="resident-info">
+                                                        <div class="resident-avatar">
+                                                            <i class="fas fa-user"></i>
+                                                        </div>
+                                                        <%= tamTru.nhanKhau ? tamTru.nhanKhau.hoTen : 'N/A' %>
+                                                    </div>
+                                                </td>
+                                                <td><%= tamTru.diaChiTamTru %></td>
+                                                <td>
+                                                    <%= new Date(tamTru.tuNgay).toLocaleDateString('vi-VN') %> - 
+                                                    <%= new Date(tamTru.denNgay).toLocaleDateString('vi-VN') %>
+                                                </td>
+                                                <td><%= tamTru.lyDo || 'Không có' %></td>
+                                                <td>
+                                                    <% if (tamTru.trangThai === 'Chờ duyệt') { %>
+                                                        <span class="status-badge status-pending">Chờ duyệt</span>
+                                                    <% } else if (tamTru.trangThai === 'Đã duyệt') { %>
+                                                        <span class="status-badge status-approved">Đã duyệt</span>
+                                                    <% } else { %>
+                                                        <span class="status-badge status-rejected">Từ chối</span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <a href="/toquan/tamtru/<%= tamTru._id %>" class="action-btn" title="Xem chi tiết">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="/toquan/tamtru/<%= tamTru._id %>/edit" class="action-btn" title="Chỉnh sửa">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button class="action-btn action-btn-delete" title="Xóa" onclick="confirmDelete('tamtru', '<%= tamTru._id %>')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td colspan="7">
+                                                <div class="empty-state">
+                                                    <i class="fas fa-house-user"></i>
+                                                    <h3 class="empty-state-title">Không có dữ liệu tạm trú</h3>
+                                                    <p class="empty-state-text">Chưa có thông tin tạm trú nào được đăng ký. Vui lòng thêm mới bằng cách nhấn vào nút "Đăng ký tạm trú".</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tạm Vắng Content -->
+            <div class="tab-content" id="tamvang-sub-content">
+                <!-- Search Box -->
+                <div class="search-container">
+                    <input type="text" class="search-box" id="tamvang-search" placeholder="Tìm kiếm tạm vắng...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+
+                <!-- Tạm Vắng Table -->
+                <div class="content-card">
+                    <div class="content-card-body">
+                        <div class="table-responsive">
+                            <table class="custom-table" id="tamvang-table">
+                                <thead>
+                                    <tr>
+                                        <th>STT</th>
+                                        <th>Người đăng ký</th>
+                                        <th>Nơi tạm trú</th>
+                                        <th>Thời gian</th>
+                                        <th>Lý do</th>
+                                        <th>Trạng thái</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (typeof tamVangList !== 'undefined' && tamVangList && tamVangList.length > 0) { %>
+                                        <% tamVangList.forEach((tamVang, index) => { %>
+                                            <tr>
+                                                <td><%= index + 1 %></td>
+                                                <td>
+                                                    <div class="resident-info">
+                                                        <div class="resident-avatar">
+                                                            <i class="fas fa-user"></i>
+                                                        </div>
+                                                        <%= tamVang.nhanKhau ? tamVang.nhanKhau.hoTen : 'N/A' %>
+                                                    </div>
+                                                </td>
+                                                <td><%= tamVang.noiTamTru %></td>
+                                                <td>
+                                                    <%= new Date(tamVang.tuNgay).toLocaleDateString('vi-VN') %> - 
+                                                    <%= new Date(tamVang.denNgay).toLocaleDateString('vi-VN') %>
+                                                </td>
+                                                <td><%= tamVang.lyDo || 'Không có' %></td>
+                                                <td>
+                                                    <% if (tamVang.trangThai === 'Chờ duyệt') { %>
+                                                        <span class="status-badge status-pending">Chờ duyệt</span>
+                                                    <% } else if (tamVang.trangThai === 'Đã duyệt') { %>
+                                                        <span class="status-badge status-approved">Đã duyệt</span>
+                                                    <% } else { %>
+                                                        <span class="status-badge status-rejected">Từ chối</span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <a href="/toquan/tamvang/<%= tamVang._id %>" class="action-btn" title="Xem chi tiết">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="/toquan/tamvang/<%= tamVang._id %>/edit" class="action-btn" title="Chỉnh sửa">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button class="action-btn action-btn-delete" title="Xóa" onclick="confirmDelete('tamvang', '<%= tamVang._id %>')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td colspan="7">
+                                                <div class="empty-state">
+                                                    <i class="fas fa-house-user"></i>
+                                                    <h3 class="empty-state-title">Không có dữ liệu tạm vắng</h3>
+                                                    <p class="empty-state-text">Chưa có thông tin tạm vắng nào được đăng ký. Vui lòng thêm mới bằng cách nhấn vào nút "Đăng ký tạm vắng".</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Hiển thị debug info trong development
-            const debugSection = document.querySelector('.debug-section');
-            if (debugSection) {
-                // Ẩn debug section sau 10 giây
-                setTimeout(() => {
-                    debugSection.style.display = 'none';
-                }, 10000);
-            }
-            
-            // Tab Switching
+            // Main Tab Switching
             const hokhauTab = document.getElementById('hokhau-tab');
             const nhankhauTab = document.getElementById('nhankhau-tab');
+            const tamtruTab = document.getElementById('tamtru-tab');
+            
             const hokhauContent = document.getElementById('hokhau-content');
             const nhankhauContent = document.getElementById('nhankhau-content');
+            const tamtruContent = document.getElementById('tamtru-content');
             
-            hokhauTab.addEventListener('click', function() {
-                hokhauTab.classList.add('active');
-                nhankhauTab.classList.remove('active');
-                hokhauContent.style.display = 'block';
-                nhankhauContent.style.display = 'none';
-            });
+            function switchMainTab(activeTab, activeContent) {
+                // Remove active class from all tabs and contents
+                [hokhauTab, nhankhauTab, tamtruTab].forEach(tab => tab.classList.remove('active'));
+                [hokhauContent, nhankhauContent, tamtruContent].forEach(content => content.classList.remove('active'));
+                
+                // Add active class to selected tab and content
+                activeTab.classList.add('active');
+                activeContent.classList.add('active');
+            }
             
-            nhankhauTab.addEventListener('click', function() {
-                nhankhauTab.classList.add('active');
-                hokhauTab.classList.remove('active');
-                nhankhauContent.style.display = 'block';
-                hokhauContent.style.display = 'none';
-            });
+            hokhauTab.addEventListener('click', () => switchMainTab(hokhauTab, hokhauContent));
+            nhankhauTab.addEventListener('click', () => switchMainTab(nhankhauTab, nhankhauContent));
+            tamtruTab.addEventListener('click', () => switchMainTab(tamtruTab, tamtruContent));
+            
+            // Sub Tab Switching for Temporary Residence
+            const tamtruSubTab = document.getElementById('tamtru-sub-tab');
+            const tamvangSubTab = document.getElementById('tamvang-sub-tab');
+            const tamtruSubContent = document.getElementById('tamtru-sub-content');
+            const tamvangSubContent = document.getElementById('tamvang-sub-content');
+            
+            function switchSubTab(activeTab, activeContent) {
+                [tamtruSubTab, tamvangSubTab].forEach(tab => tab.classList.remove('active'));
+                [tamtruSubContent, tamvangSubContent].forEach(content => content.classList.remove('active'));
+                
+                activeTab.classList.add('active');
+                activeContent.classList.add('active');
+            }
+            
+            if (tamtruSubTab && tamvangSubTab) {
+                tamtruSubTab.addEventListener('click', () => switchSubTab(tamtruSubTab, tamtruSubContent));
+                tamvangSubTab.addEventListener('click', () => switchSubTab(tamvangSubTab, tamvangSubContent));
+            }
             
             // Toggle Household Details
             const householdHeaders = document.querySelectorAll('.household-header');
@@ -818,31 +1056,6 @@
                 });
             }
             
-            // Search functionality for resident table
-            const nhankhauSearch = document.getElementById('nhankhau-search');
-            if (nhankhauSearch) {
-                nhankhauSearch.addEventListener('keyup', function() {
-                    const searchValue = this.value.toLowerCase();
-                    const residentRows = document.querySelectorAll('#nhankhau-content tbody tr');
-                    
-                    residentRows.forEach(row => {
-                        // Skip if it's an empty state row
-                        if (row.querySelector('td[colspan="8"]')) {
-                            return;
-                        }
-                        
-                        const hoten = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                        const cccd = row.querySelector('td:nth-child(7)').textContent.toLowerCase();
-                        
-                        if (hoten.includes(searchValue) || cccd.includes(searchValue)) {
-                            row.style.display = 'table-row';
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    });
-                });
-            }
-            
             // Xóa hộ khẩu
             const deleteButtons = document.querySelectorAll('.action-btn-delete');
             deleteButtons.forEach(btn => {
@@ -856,6 +1069,81 @@
                     }
                 });
             });
+        });
+        
+        // Confirm delete function for temporary residence
+        function confirmDelete(type, id) {
+            if (confirm(`Bạn có chắc chắn muốn xóa thông tin này?`)) {
+                window.location.href = `/toquan/${type}/${id}/delete`;
+            }
+        }
+        
+        // Confirm delete function for nhan khau
+        function confirmDeleteNhanKhau(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa nhân khẩu này?')) {
+                window.location.href = `/toquan/nhankhau/${id}/delete`;
+            }
+        }
+        
+        // Search functionality for temporary residence tables
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tìm kiếm tạm trú
+            const tamtruSearch = document.getElementById('tamtru-search');
+            if (tamtruSearch) {
+                tamtruSearch.addEventListener('keyup', function() {
+                    const searchText = this.value.toLowerCase();
+                    const table = document.getElementById('tamtru-table');
+                    const rows = table.getElementsByTagName('tr');
+                    
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        // Bỏ qua hàng empty state
+                        if (row.getElementsByTagName('td').length === 1) continue;
+                        
+                        let found = false;
+                        const cells = row.getElementsByTagName('td');
+                        
+                        for (let j = 1; j < cells.length - 1; j++) {
+                            const cellText = cells[j].textContent.toLowerCase();
+                            if (cellText.includes(searchText)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        
+                        row.style.display = found ? '' : 'none';
+                    }
+                });
+            }
+            
+            // Tìm kiếm tạm vắng
+            const tamvangSearch = document.getElementById('tamvang-search');
+            if (tamvangSearch) {
+                tamvangSearch.addEventListener('keyup', function() {
+                    const searchText = this.value.toLowerCase();
+                    const table = document.getElementById('tamvang-table');
+                    const rows = table.getElementsByTagName('tr');
+                    
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        // Bỏ qua hàng empty state
+                        if (row.getElementsByTagName('td').length === 1) continue;
+                        
+                        let found = false;
+                        const cells = row.getElementsByTagName('td');
+                        
+                        for (let j = 1; j < cells.length - 1; j++) {
+                            const cellText = cells[j].textContent.toLowerCase();
+                            if (cellText.includes(searchText)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        
+                        row.style.display = found ? '' : 'none';
+                    }
+                });
+            }
         });
     </script>
 </body>
