@@ -2,6 +2,8 @@ const express = require("express");
 const path = require("path");
 const session = require('express-session');
 const puppeteer = require('puppeteer'); 
+const jwt = require('jsonwebtoken');
+const SECRET = 'my-jwt-secret';
 const { 
     UserCollection, 
     ApartmentCollection, 
@@ -76,6 +78,24 @@ app.get("/", async (req, res) => {
 app.get("/login", (req, res) => {
     res.render("login");
 });
+app.get("/api/login", (req, res) => {
+    const { username, password } = req.query;
+
+    let user = null;
+
+    if (username === "ketoan" && password === "123456789") {
+        user = { id: "1", name: "admin", role: "admin" };
+    } else if (username === "totruong" && password === "123456789") {
+        user = { id: "3", name: "toquan", role: "toquan" };
+    }
+
+    if (user) {
+        const token = jwt.sign(user, SECRET, { expiresIn: "1h" });
+        return res.json({ token });
+    } else {
+        return res.status(401).json({ error: "Invalid credentials" });
+    }
+});
 
 // In src/index.js
 app.post("/login", async (req, res) => {
@@ -122,7 +142,24 @@ app.post("/login", async (req, res) => {
         res.status(500).render("login", { error: "Login error" });
     }
 });
+app.post("/api/login", async (req, res) => {
+    const { username, password } = req.body;
 
+    let user = null;
+
+    if (username === "ketoan" && password === "123456789") {
+        user = { id: "1", name: "admin", role: "admin" };
+    } else if (username === "totruong" && password === "123456789") {
+        user = { id: "3", name: "toquan", role: "toquan" };
+    } // v.v...
+
+    if (user) {
+        const token = jwt.sign(user, SECRET, { expiresIn: '1h' });
+        return res.json({ token });
+    } else {
+        return res.status(401).json({ error: "Invalid credentials" });
+    }
+});
 // Logout
 app.get("/logout", (req, res) => {
     req.session.destroy((err) => {
