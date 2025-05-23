@@ -82,7 +82,7 @@ app.post("/login", async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        if(username === "admin" && password === "123456789") {
+        if(username === "ketoan" && password === "123456789") {
             // Set session data
             req.session.name = "admin";
             req.session.role = "admin";
