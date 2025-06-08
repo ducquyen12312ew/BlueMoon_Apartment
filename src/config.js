@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const connect = mongoose.connect("mongodb://0.0.0.0:27017/BlueMoonApartment");
+const connect = mongoose.connect(process.env.MONGODB_URI || "mongodb+srv://ducquyen969:3FGLSPnOx7QtTiL9@cluster0.ryjtxa6.mongodb.net/BlueMoonApartment");
 
 connect.then(() => {
     console.log("Database Connected Successfully");
@@ -144,6 +144,53 @@ const ResidentSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     }
+});
+const KhoanThuHistorySchema = new mongoose.Schema({
+    khoanThuId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'khoanthus'
+    },
+    khoanThuData: {
+        maKhoanThu: String,
+        tenKhoanThu: String,
+        soTien: Number,
+        loaiKhoanThu: Number,
+        ngayTao: Date,
+        hanThanhToan: Date,
+        moTa: String
+    },
+    actionType: {
+        type: String,
+        enum: ['CREATE', 'EDIT', 'DELETE'],
+        required: true
+    },
+    actionDetails: {
+        type: String,
+        required: true
+    },
+    changedFields: [String],
+    oldValues: {
+        type: Map,
+        of: mongoose.Schema.Types.Mixed
+    },
+    newValues: {
+        type: Map,
+        of: mongoose.Schema.Types.Mixed
+    },
+    performedBy: {
+        type: String,
+        required: true
+    },
+    performedById: {
+        type: String,
+        required: true
+    },
+    performedAt: {
+        type: Date,
+        default: Date.now
+    },
+    ipAddress: String,
+    userAgent: String
 });
 
 // Resident Profile Schema (New)
@@ -642,7 +689,279 @@ const FeedbackSchema = new mongoose.Schema({
     },
     attachments: [String]
 });
+const VehicleRegistrationSchema = new mongoose.Schema({
+    resident: {
+        type: String, // Đổi từ ObjectId thành String cho demo
+        required: true
+    },
+    residentName: {
+        type: String,
+        required: true
+    },
+    apartment: {
+        type: String,
+        required: true
+    },
+    vehicleType: {
+        type: String,
+        enum: ['motorbike', 'car', 'bicycle'],
+        required: true
+    },
+    licensePlate: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    vehicleBrand: {
+        type: String,
+        required: true
+    },
+    vehicleModel: {
+        type: String
+    },
+    vehicleColor: {
+        type: String,
+        required: true
+    },
+    parkingSpot: {
+        type: String,
+        required: true
+    },
+    registrationDate: {
+        type: Date,
+        default: Date.now
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'active', 'suspended', 'cancelled'],
+        default: 'pending'
+    },
+    cardNumber: {
+        type: String,
+        unique: true,
+        sparse: true // Cho phép null
+    },
+    notes: String,
+    approvedBy: {
+        type: String
+    },
+    approvedAt: {
+        type: Date
+    }
+});
 
+// Parking Fee Schema (Phí gửi xe)
+const ParkingFeeSchema = new mongoose.Schema({
+    vehicleRegistration: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'vehicleregistrations',
+        required: true
+    },
+    residentName: {
+        type: String,
+        required: true
+    },
+    apartment: {
+        type: String,
+        required: true
+    },
+    licensePlate: {
+        type: String,
+        required: true
+    },
+    vehicleType: {
+        type: String,
+        enum: ['motorbike', 'car', 'bicycle'],
+        required: true
+    },
+    feeAmount: {
+        type: Number,
+        required: true
+    },
+    feeType: {
+        type: String,
+        enum: ['monthly', 'yearly'],
+        default: 'monthly'
+    },
+    fromDate: {
+        type: Date,
+        required: true
+    },
+    toDate: {
+        type: Date,
+        required: true
+    },
+    dueDate: {
+        type: Date,
+        required: true
+    },
+    status: {
+        type: String,
+        enum: ['unpaid', 'paid', 'overdue'],
+        default: 'unpaid'
+    },
+    paidDate: {
+        type: Date
+    },
+    paymentMethod: {
+        type: String,
+        enum: ['cash', 'bank', 'qr']
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    paidBy: {
+        type: String
+    },
+    notes: String
+});
+
+// Vehicle Entry/Exit Log Schema (Lịch sử ra vào)
+const VehicleLogSchema = new mongoose.Schema({
+    vehicleRegistration: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'vehicleregistrations',
+        required: true
+    },
+    licensePlate: {
+        type: String,
+        required: true
+    },
+    vehicleType: {
+        type: String,
+        required: true
+    },
+    apartment: {
+        type: String,
+        required: true
+    },
+    entryTime: {
+        type: Date,
+        required: true
+    },
+    exitTime: {
+        type: Date
+    },
+    entryStaff: {
+        type: String,
+        required: true
+    },
+    exitStaff: {
+        type: String
+    },
+    status: {
+        type: String,
+        enum: ['entered', 'exited'],
+        default: 'entered'
+    },
+    notes: String,
+    cameraFootage: String // Đường dẫn đến file camera nếu có
+});
+
+// Parking Incident Schema (Sự cố bãi xe)
+const ParkingIncidentSchema = new mongoose.Schema({
+    incidentType: {
+        type: String,
+        enum: ['damage', 'theft', 'violation', 'accident', 'other'],
+        required: true
+    },
+    title: {
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+        required: true
+    },
+    involvedVehicles: [{
+        vehicleRegistration: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'vehicleregistrations'
+        },
+        licensePlate: String,
+        apartment: String
+    }],
+    location: {
+        type: String,
+        required: true
+    },
+    incidentDate: {
+        type: Date,
+        default: Date.now
+    },
+    reportedBy: {
+        type: String,
+        required: true
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'investigating', 'resolved', 'closed'],
+        default: 'pending'
+    },
+    evidence: [{
+        type: String, // Đường dẫn file ảnh/video
+        description: String
+    }],
+    resolution: {
+        type: String
+    },
+    fineAmount: {
+        type: Number,
+        default: 0
+    },
+    resolvedBy: {
+        type: String
+    },
+    resolvedAt: {
+        type: Date
+    },
+    notes: String
+});
+
+// Parking Notification Schema (Thông báo về xe)
+const ParkingNotificationSchema = new mongoose.Schema({
+    recipient: {
+        type: String, // Đổi từ ObjectId thành String
+        required: true
+    },
+    recipientName: {
+        type: String,
+        required: true
+    },
+    apartment: {
+        type: String,
+        required: true
+    },
+    title: {
+        type: String,
+        required: true
+    },
+    message: {
+        type: String,
+        required: true
+    },
+    type: {
+        type: String,
+        enum: ['fee_due', 'registration_approved', 'registration_rejected', 'incident', 'general'],
+        required: true
+    },
+    relatedVehicle: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'vehicleregistrations'
+    },
+    isRead: {
+        type: Boolean,
+        default: false
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    readAt: {
+        type: Date
+    }
+});
 // Create model from schema
 const FeedbackCollection = mongoose.model("feedbacks", FeedbackSchema);
 //=============================================================================
@@ -665,7 +984,12 @@ const TamTruCollection = mongoose.model("tamtru", TamTruSchema);
 const TamVangCollection = mongoose.model("tamvang", TamVangSchema);
 const BienDoiNhanKhauCollection = mongoose.model("biendoinhankhau", BienDoiNhanKhauSchema);
 const MaintenanceStaffCollection = mongoose.model("maintenanceStaff", MaintenanceStaffSchema);
-
+const VehicleRegistrationCollection = mongoose.model("vehicleregistrations", VehicleRegistrationSchema);
+const ParkingFeeCollection = mongoose.model("parkingfees", ParkingFeeSchema);
+const VehicleLogCollection = mongoose.model("vehiclelogs", VehicleLogSchema);
+const ParkingIncidentCollection = mongoose.model("parkingincidents", ParkingIncidentSchema);
+const ParkingNotificationCollection = mongoose.model("parkingnotifications", ParkingNotificationSchema);
+const KhoanThuHistoryCollection = mongoose.model("khoanthuhistories", KhoanThuHistorySchema);
 //=============================================================================
 // INITIALIZATION FUNCTIONS
 //=============================================================================
@@ -970,9 +1294,15 @@ module.exports = {
     NopTienCollection,
     HoKhauCollection,
     NhanKhauCollection,
+    KhoanThuHistoryCollection,
     TamTruCollection,
     TamVangCollection,
     BienDoiNhanKhauCollection,
     FeedbackCollection,
-    MaintenanceStaffCollection
+    MaintenanceStaffCollection,
+    VehicleRegistrationCollection,
+    ParkingFeeCollection,
+    VehicleLogCollection,
+    ParkingIncidentCollection,
+    ParkingNotificationCollection
 };

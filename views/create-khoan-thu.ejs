@@ -1155,16 +1155,29 @@
 
         // Delete khoản thu
         function deleteKhoanThu(id, tenKhoanThu) {
+            console.log("Attempting to delete:", id, tenKhoanThu); // Debug log
+            
             if (confirm(`Bạn có chắc chắn muốn xóa khoản thu "${tenKhoanThu}"?\n\nViệc này sẽ xóa tất cả dữ liệu liên quan và không thể hoàn tác.`)) {
                 $.ajax({
                     url: `/khoan-thu/${id}/delete`,
                     method: 'DELETE',
-                    success: function() {
+                    success: function(response) {
+                        console.log("Delete success:", response); // Debug log
                         showAlert('success', 'Xóa khoản thu thành công!');
                         loadKhoanThuData();
                     },
-                    error: function() {
-                        alert('Không thể xóa khoản thu. Vui lòng thử lại.');
+                    error: function(xhr, status, error) {
+                        console.error("Delete error:", xhr.status, xhr.responseText); // Debug log
+                        console.error("Status:", status, "Error:", error);
+                        
+                        // Hiển thị lỗi chi tiết
+                        let errorMsg = 'Không thể xóa khoản thu. ';
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg += xhr.responseJSON.error;
+                        } else {
+                            errorMsg += `Lỗi ${xhr.status}: ${xhr.statusText}`;
+                        }
+                        alert(errorMsg);
                     }
                 });
             }

@@ -9,18 +9,25 @@ const {
     UserCollection, 
     ApartmentCollection, 
     ResidentCollection, 
+    ResidentProfileCollection,
     PaymentCollection,
     NoticeCollection,
     KhoanThuCollection,
+    NopTienCollection,
     HoKhauCollection,
     NhanKhauCollection,
     TamTruCollection,
     TamVangCollection,
     BienDoiNhanKhauCollection,
-    NopTienCollection,
-    MaintenanceStaffCollection,
+    KhoanThuHistoryCollection,
     FeedbackCollection,
-    ResidentProfileCollection
+    MaintenanceStaffCollection,
+    // CÁC MODEL MỚI CHO HỆ THỐNG XE
+    VehicleRegistrationCollection,
+    ParkingFeeCollection,
+    VehicleLogCollection,
+    ParkingIncidentCollection,
+    ParkingNotificationCollection
 } = require('./config');
 
 const app = express();
@@ -360,6 +367,8 @@ app.get("/logout", (req, res) => {
 
 app.get("/admin/dashboard", ensureAuthenticated, ensureAdmin, async (req, res) => {
     try {
+        console.log("Loading admin dashboard...");
+        
         // Get real statistics from database
         const totalApartments = await ApartmentCollection.countDocuments();
         const totalResidents = await ResidentCollection.countDocuments();
@@ -460,6 +469,59 @@ app.get("/admin/dashboard", ensureAuthenticated, ensureAdmin, async (req, res) =
             unpaid: unpaidHouseholds || 10,
             exempt: 20 // Placeholder, you might need to calculate this differently
         };
+
+        // ===== THÊM MỚI: Lấy lịch sử khoản thu =====
+        let recentHistory = [];
+        let historyStats = { create: 0, edit: 0, delete: 0 };
+        
+        try {
+            console.log("Fetching history data...");
+            
+            // Kiểm tra xem KhoanThuHistoryCollection có tồn tại không
+            if (typeof KhoanThuHistoryCollection !== 'undefined') {
+                // Lấy lịch sử gần nhất
+                recentHistory = await KhoanThuHistoryCollection.find()
+                    .sort({ performedAt: -1 })
+                    .limit(10);
+                
+                console.log("Recent history found:", recentHistory.length);
+                
+                // Thống kê lịch sử
+                const historyStatsData = await KhoanThuHistoryCollection.aggregate([
+                    {
+                        $group: {
+                            _id: "$actionType",
+                            count: { $sum: 1 }
+                        }
+                    }
+                ]);
+
+                historyStatsData.forEach(stat => {
+                    if (stat._id === 'CREATE') historyStats.create = stat.count;
+                    if (stat._id === 'EDIT') historyStats.edit = stat.count;
+                    if (stat._id === 'DELETE') historyStats.delete = stat.count;
+                });
+                
+                console.log("History stats:", historyStats);
+            } else {
+                console.log("KhoanThuHistoryCollection not available");
+            }
+            
+        } catch (historyError) {
+            console.error("Error loading history:", historyError);
+            // Sử dụng dữ liệu mặc định nếu có lỗi
+            recentHistory = [];
+            historyStats = { create: 0, edit: 0, delete: 0 };
+        }
+
+        console.log("Rendering dashboard with data:", {
+            totalApartments,
+            totalResidents,
+            paymentPercentage,
+            unpaidHouseholds,
+            historyCount: recentHistory.length,
+            historyStats
+        });
         
         res.render("admin-dashboard", {
             totalApartments: totalApartments || 245,
@@ -467,13 +529,108 @@ app.get("/admin/dashboard", ensureAuthenticated, ensureAdmin, async (req, res) =
             paymentPercentage,
             unpaidHouseholds,
             monthlyData,
-            paymentBreakdown
+            paymentBreakdown,
+            // THÊM MỚI: Truyền dữ liệu lịch sử
+            recentHistory,
+            historyStats
         });
     } catch (error) {
         console.error("Dashboard error:", error);
         res.status(500).send("Error loading dashboard: " + error.message);
     }
 });
+app.get("/api/khoan-thu-history", ensureAuthenticated, ensureAdmin, async (req, res) => {
+    try {
+        console.log("API khoan-thu-history called");
+        
+        // Kiểm tra xem KhoanThuHistoryCollection có tồn tại không
+        if (typeof KhoanThuHistoryCollection === 'undefined') {
+            console.log("KhoanThuHistoryCollection not available");
+            return res.json({
+                success: false,
+                error: "History collection not available",
+                data: []
+            });
+        }
+        
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const histories = await KhoanThuHistoryCollection.find()
+            .sort({ performedAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const total = await KhoanThuHistoryCollection.countDocuments();
+        
+        console.log("Found histories:", histories.length);
+
+        res.json({
+            success: true,
+            data: histories,
+            pagination: {
+                current: page,
+                total: Math.ceil(total / limit),
+                totalRecords: total
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching history:", error);
+        res.status(500).json({ 
+            success: false,
+            error: "Lỗi khi lấy lịch sử: " + error.message,
+            data: []
+        });
+    }
+});
+
+// API lấy thống kê lịch sử
+app.get("/api/khoan-thu-history/stats", ensureAuthenticated, ensureAdmin, async (req, res) => {
+    try {
+        if (typeof KhoanThuHistoryCollection === 'undefined') {
+            return res.json({
+                success: false,
+                stats: { create: 0, edit: 0, delete: 0, total: 0 }
+            });
+        }
+
+        const stats = await KhoanThuHistoryCollection.aggregate([
+            {
+                $group: {
+                    _id: "$actionType",
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        const statsObj = {
+            create: 0,
+            edit: 0,
+            delete: 0,
+            total: 0
+        };
+
+        stats.forEach(stat => {
+            const type = stat._id.toLowerCase();
+            statsObj[type] = stat.count;
+            statsObj.total += stat.count;
+        });
+
+        res.json({
+            success: true,
+            stats: statsObj
+        });
+    } catch (error) {
+        console.error("Error fetching history stats:", error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message,
+            stats: { create: 0, edit: 0, delete: 0, total: 0 }
+        });
+    }
+});
+
 app.get("/api/khoan-thu", ensureAuthenticated, ensureAdmin, async (req, res) => {
     try {
         const khoanThuList = await KhoanThuCollection.find().sort({ ngayTao: -1 });
@@ -508,31 +665,207 @@ app.get("/khoan-thu", ensureAuthenticated, ensureAdmin, async (req, res) => {
         res.status(500).send("Error processing your request");
     }
 });
-app.post("/khoan-thu/:id/edit", ensureAuthenticated, ensureAdmin, async (req, res) => {
+app.get("/create-sample-history", ensureAuthenticated, ensureAdmin, async (req, res) => {
     try {
-        const { maKhoanThu, tenKhoanThu, soTien, loaiKhoanThu, ngayTao, hanThanhToan, moTa } = req.body;
+        console.log("Creating sample history data...");
         
-        // Validate inputs
-        if (!maKhoanThu || !tenKhoanThu || !soTien) {
-            return res.status(400).json({ 
-                error: "Vui lòng điền đầy đủ thông tin bắt buộc"
+        // Kiểm tra xem KhoanThuHistoryCollection có tồn tại không
+        if (typeof KhoanThuHistoryCollection === 'undefined') {
+            return res.status(500).json({ 
+                error: "KhoanThuHistoryCollection not available. Please check config.js imports." 
             });
         }
         
-        // Check if maKhoanThu already exists (excluding current record)
+        // Xóa dữ liệu cũ
+        await KhoanThuHistoryCollection.deleteMany({});
+        
+        // Tạo dữ liệu mẫu
+        const sampleData = [
+            {
+                khoanThuId: new mongoose.Types.ObjectId(),
+                khoanThuData: {
+                    maKhoanThu: "QL001",
+                    tenKhoanThu: "Phí quản lý tháng 12",
+                    soTien: 500000,
+                    loaiKhoanThu: 0,
+                    ngayTao: new Date(),
+                    hanThanhToan: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                    moTa: "Phí quản lý chung cư"
+                },
+                actionType: 'CREATE',
+                actionDetails: 'Tạo mới khoản thu: Phí quản lý tháng 12 (QL001) - Số tiền: 500,000 VNĐ',
+                changedFields: [],
+                oldValues: new Map(),
+                newValues: new Map(),
+                performedBy: 'Admin',
+                performedById: 'admin',
+                performedAt: new Date(),
+                ipAddress: '127.0.0.1',
+                userAgent: 'Test Browser'
+            },
+            {
+                khoanThuId: new mongoose.Types.ObjectId(),
+                khoanThuData: {
+                    maKhoanThu: "DV001",
+                    tenKhoanThu: "Phí dịch vụ",
+                    soTien: 300000,
+                    loaiKhoanThu: 0,
+                    ngayTao: new Date(),
+                    hanThanhToan: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                    moTa: "Phí dịch vụ chung"
+                },
+                actionType: 'EDIT',
+                actionDetails: 'Chỉnh sửa khoản thu: Phí dịch vụ (DV001) - Số tiền: 250,000 → 300,000 VNĐ',
+                changedFields: ['soTien'],
+                oldValues: new Map([['soTien', 250000]]),
+                newValues: new Map([['soTien', 300000]]),
+                performedBy: 'Admin',
+                performedById: 'admin',
+                performedAt: new Date(Date.now() - 3600000), // 1 hour ago
+                ipAddress: '127.0.0.1',
+                userAgent: 'Test Browser'
+            },
+            {
+                khoanThuId: new mongoose.Types.ObjectId(),
+                khoanThuData: {
+                    maKhoanThu: "GX001",
+                    tenKhoanThu: "Phí gửi xe",
+                    soTien: 100000,
+                    loaiKhoanThu: 1,
+                    ngayTao: new Date(),
+                    hanThanhToan: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                    moTa: "Phí gửi xe tháng"
+                },
+                actionType: 'DELETE',
+                actionDetails: 'Xóa khoản thu: Phí gửi xe (GX001) - Số tiền: 100,000 VNĐ, Loại: Tự nguyện',
+                changedFields: [],
+                oldValues: new Map([
+                    ['maKhoanThu', 'GX001'],
+                    ['tenKhoanThu', 'Phí gửi xe'],
+                    ['soTien', 100000],
+                    ['loaiKhoanThu', 1]
+                ]),
+                newValues: new Map(),
+                performedBy: 'Admin',
+                performedById: 'admin',
+                performedAt: new Date(Date.now() - 7200000), // 2 hours ago
+                ipAddress: '127.0.0.1',
+                userAgent: 'Test Browser'
+            },
+            {
+                khoanThuId: new mongoose.Types.ObjectId(),
+                khoanThuData: {
+                    maKhoanThu: "VS001",
+                    tenKhoanThu: "Phí vệ sinh",
+                    soTien: 200000,
+                    loaiKhoanThu: 0,
+                    ngayTao: new Date(),
+                    hanThanhToan: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                    moTa: "Phí vệ sinh chung"
+                },
+                actionType: 'CREATE',
+                actionDetails: 'Tạo mới khoản thu: Phí vệ sinh (VS001) - Số tiền: 200,000 VNĐ',
+                changedFields: [],
+                oldValues: new Map(),
+                newValues: new Map(),
+                performedBy: 'Admin',
+                performedById: 'admin',
+                performedAt: new Date(Date.now() - 10800000), // 3 hours ago
+                ipAddress: '127.0.0.1',
+                userAgent: 'Test Browser'
+            },
+            {
+                khoanThuId: new mongoose.Types.ObjectId(),
+                khoanThuData: {
+                    maKhoanThu: "AN001",
+                    tenKhoanThu: "Phí an ninh",
+                    soTien: 350000,
+                    loaiKhoanThu: 0,
+                    ngayTao: new Date(),
+                    hanThanhToan: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                    moTa: "Phí bảo vệ an ninh"
+                },
+                actionType: 'EDIT',
+                actionDetails: 'Chỉnh sửa khoản thu: Phí an ninh (AN001) - Tên khoản thu: "Phí bảo vệ" → "Phí an ninh", Số tiền: 300,000 → 350,000 VNĐ',
+                changedFields: ['tenKhoanThu', 'soTien'],
+                oldValues: new Map([
+                    ['tenKhoanThu', 'Phí bảo vệ'],
+                    ['soTien', 300000]
+                ]),
+                newValues: new Map([
+                    ['tenKhoanThu', 'Phí an ninh'],
+                    ['soTien', 350000]
+                ]),
+                performedBy: 'Admin',
+                performedById: 'admin',
+                performedAt: new Date(Date.now() - 14400000), // 4 hours ago
+                ipAddress: '127.0.0.1',
+                userAgent: 'Test Browser'
+            }
+        ];
+        
+        const result = await KhoanThuHistoryCollection.insertMany(sampleData);
+        console.log("Sample history data created:", result.length);
+        
+        res.json({ 
+            success: true, 
+            message: `Đã tạo ${result.length} bản ghi lịch sử mẫu thành công!`,
+            count: result.length,
+            data: result
+        });
+    } catch (error) {
+        console.error("Error creating sample data:", error);
+        res.status(500).json({ 
+            error: error.message,
+            details: "Make sure KhoanThuHistoryCollection is properly imported in config.js and index.js"
+        });
+    }
+});
+// Route cập nhật khoản thu - HOÀN CHỈNH với lưu lịch sử
+app.post("/khoan-thu/:id/edit", ensureAuthenticated, ensureAdmin, async (req, res) => {
+    try {
+        const { maKhoanThu, tenKhoanThu, soTien, loaiKhoanThu, ngayTao, hanThanhToan, moTa } = req.body;
+
+        // Lấy thông tin khoản thu cũ trước khi cập nhật
+        const oldKhoanThu = await KhoanThuCollection.findById(req.params.id);
+        if (!oldKhoanThu) {
+            if (req.headers['content-type'] === 'application/x-www-form-urlencoded' && !req.headers.referer?.includes('create')) {
+                return res.status(404).json({ error: "Khoản thu không tồn tại" });
+            }
+            return res.render("create-khoan-thu", { 
+                error: "Khoản thu không tồn tại",
+                formData: req.body
+            });
+        }
+
+        // Validate required fields
+        if (!maKhoanThu || !tenKhoanThu || !soTien) {
+            if (req.headers['content-type'] === 'application/x-www-form-urlencoded' && !req.headers.referer?.includes('create')) {
+                return res.status(400).json({ error: "Vui lòng điền đầy đủ thông tin bắt buộc" });
+            }
+            return res.render("create-khoan-thu", { 
+                error: "Vui lòng điền đầy đủ thông tin bắt buộc",
+                formData: req.body
+            });
+        }
+
+        // Check if maKhoanThu already exists (exclude current record)
         const existingKhoanThu = await KhoanThuCollection.findOne({ 
             maKhoanThu, 
             _id: { $ne: req.params.id } 
         });
-        
         if (existingKhoanThu) {
-            return res.status(400).json({ 
-                error: "Mã khoản thu đã tồn tại"
+            if (req.headers['content-type'] === 'application/x-www-form-urlencoded' && !req.headers.referer?.includes('create')) {
+                return res.status(400).json({ error: "Mã khoản thu đã tồn tại" });
+            }
+            return res.render("create-khoan-thu", { 
+                error: "Mã khoản thu đã tồn tại",
+                formData: req.body
             });
         }
-        
-        // Parse dates
-        let parsedNgayTao = new Date();
+
+        // Parse date strings properly
+        let parsedNgayTao = oldKhoanThu.ngayTao;
         if (ngayTao) {
             if (ngayTao.includes('/')) {
                 const [day, month, year] = ngayTao.split('/');
@@ -544,7 +877,7 @@ app.post("/khoan-thu/:id/edit", ensureAuthenticated, ensureAdmin, async (req, re
                 }
             }
         }
-        
+
         let parsedHanThanhToan = null;
         if (hanThanhToan) {
             if (hanThanhToan.includes('/')) {
@@ -557,34 +890,150 @@ app.post("/khoan-thu/:id/edit", ensureAuthenticated, ensureAdmin, async (req, re
                 }
             }
         }
-        
+
+        // Chuẩn bị dữ liệu mới
+        const newData = {
+            maKhoanThu,
+            tenKhoanThu,
+            soTien: parseFloat(soTien),
+            loaiKhoanThu: parseInt(loaiKhoanThu || 0),
+            ngayTao: parsedNgayTao,
+            hanThanhToan: parsedHanThanhToan,
+            moTa: moTa || ""
+        };
+
+        // ===== SO SÁNH VÀ TÌM CÁC TRƯỜNG ĐÃ THAY ĐỔI =====
+        const changes = {
+            changedFields: [],
+            oldValues: {},
+            newValues: {}
+        };
+
+        const fieldsToCheck = ['maKhoanThu', 'tenKhoanThu', 'soTien', 'loaiKhoanThu', 'hanThanhToan', 'moTa'];
+
+        fieldsToCheck.forEach(field => {
+            const oldValue = oldKhoanThu[field];
+            const newValue = newData[field];
+
+            // So sánh giá trị, xử lý đặc biệt cho Date
+            let isChanged = false;
+            if (field === 'hanThanhToan') {
+                const oldDate = oldValue ? new Date(oldValue).getTime() : null;
+                const newDate = newValue ? new Date(newValue).getTime() : null;
+                isChanged = oldDate !== newDate;
+            } else {
+                isChanged = oldValue !== newValue;
+            }
+
+            if (isChanged) {
+                changes.changedFields.push(field);
+                changes.oldValues[field] = oldValue;
+                changes.newValues[field] = newValue;
+            }
+        });
+
         // Update khoản thu
         const updatedKhoanThu = await KhoanThuCollection.findByIdAndUpdate(
             req.params.id,
-            {
-                maKhoanThu,
-                tenKhoanThu,
-                soTien: parseFloat(soTien),
-                loaiKhoanThu: parseInt(loaiKhoanThu || 0),
-                ngayTao: parsedNgayTao,
-                hanThanhToan: parsedHanThanhToan,
-                moTa: moTa || ""
-            },
+            newData,
             { new: true }
         );
-        
-        if (!updatedKhoanThu) {
-            return res.status(404).json({ error: "Khoản thu không tồn tại" });
+
+        // ===== LƯU LỊCH SỬ EDIT (chỉ lưu khi có thay đổi) =====
+        if (changes.changedFields.length > 0) {
+            try {
+                // Tạo chi tiết thay đổi
+                let changeDetails = [];
+                changes.changedFields.forEach(field => {
+                    const oldVal = changes.oldValues[field];
+                    const newVal = changes.newValues[field];
+                    
+                    let fieldName = field;
+                    switch(field) {
+                        case 'maKhoanThu': fieldName = 'Mã khoản thu'; break;
+                        case 'tenKhoanThu': fieldName = 'Tên khoản thu'; break;
+                        case 'soTien': fieldName = 'Số tiền'; break;
+                        case 'loaiKhoanThu': fieldName = 'Loại khoản thu'; break;
+                        case 'hanThanhToan': fieldName = 'Hạn thanh toán'; break;
+                        case 'moTa': fieldName = 'Mô tả'; break;
+                    }
+                    
+                    if (field === 'soTien') {
+                        changeDetails.push(`${fieldName}: ${oldVal?.toLocaleString('vi-VN')} → ${newVal?.toLocaleString('vi-VN')} VNĐ`);
+                    } else if (field === 'loaiKhoanThu') {
+                        const oldType = oldVal === 0 ? 'Bắt buộc' : 'Tự nguyện';
+                        const newType = newVal === 0 ? 'Bắt buộc' : 'Tự nguyện';
+                        changeDetails.push(`${fieldName}: ${oldType} → ${newType}`);
+                    } else if (field === 'hanThanhToan') {
+                        const oldDate = oldVal ? new Date(oldVal).toLocaleDateString('vi-VN') : 'Không giới hạn';
+                        const newDate = newVal ? new Date(newVal).toLocaleDateString('vi-VN') : 'Không giới hạn';
+                        changeDetails.push(`${fieldName}: ${oldDate} → ${newDate}`);
+                    } else {
+                        changeDetails.push(`${fieldName}: "${oldVal}" → "${newVal}"`);
+                    }
+                });
+
+                const historyRecord = new KhoanThuHistoryCollection({
+                    khoanThuId: updatedKhoanThu._id,
+                    khoanThuData: {
+                        maKhoanThu: updatedKhoanThu.maKhoanThu,
+                        tenKhoanThu: updatedKhoanThu.tenKhoanThu,
+                        soTien: updatedKhoanThu.soTien,
+                        loaiKhoanThu: updatedKhoanThu.loaiKhoanThu,
+                        ngayTao: updatedKhoanThu.ngayTao,
+                        hanThanhToan: updatedKhoanThu.hanThanhToan,
+                        moTa: updatedKhoanThu.moTa
+                    },
+                    actionType: 'EDIT',
+                    actionDetails: `Chỉnh sửa khoản thu: ${updatedKhoanThu.tenKhoanThu} (${updatedKhoanThu.maKhoanThu}) - ${changeDetails.join(', ')}`,
+                    changedFields: changes.changedFields,
+                    oldValues: new Map(Object.entries(changes.oldValues)),
+                    newValues: new Map(Object.entries(changes.newValues)),
+                    performedBy: req.session.name || 'Unknown User',
+                    performedById: req.session.userId || 'unknown',
+                    ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
+                    userAgent: req.get('User-Agent') || 'unknown'
+                });
+
+                await historyRecord.save();
+                console.log(`✅ Đã lưu lịch sử chỉnh sửa khoản thu: ${updatedKhoanThu.tenKhoanThu}`);
+                console.log(`📝 Các trường đã thay đổi: ${changes.changedFields.join(', ')}`);
+            } catch (historyError) {
+                console.error('❌ Lỗi khi lưu lịch sử chỉnh sửa khoản thu:', historyError);
+                // Không throw error để không ảnh hưởng đến việc cập nhật khoản thu
+            }
+        } else {
+            console.log(`ℹ️ Không có thay đổi nào cho khoản thu: ${updatedKhoanThu.tenKhoanThu}`);
         }
-        
-        res.json({ success: true, data: updatedKhoanThu });
+        // ===== KẾT THÚC PHẦN LƯU LỊCH SỬ =====
+
+        // Return JSON for AJAX requests
+        if (req.headers['content-type'] === 'application/x-www-form-urlencoded' && !req.headers.referer?.includes('create')) {
+            return res.json({ 
+                success: true, 
+                data: updatedKhoanThu,
+                message: changes.changedFields.length > 0 ? 
+                    'Cập nhật khoản thu thành công! Lịch sử đã được lưu.' : 
+                    'Cập nhật khoản thu thành công! (Không có thay đổi)'
+            });
+        }
+
+        // Redirect for form submission
+        res.redirect("/khoan-thu/create?success=1&action=edit");
     } catch (error) {
         console.error("Error updating khoan thu:", error);
-        res.status(500).json({ error: "Lỗi khi cập nhật khoản thu: " + error.message });
+        
+        if (req.headers['content-type'] === 'application/x-www-form-urlencoded' && !req.headers.referer?.includes('create')) {
+            return res.status(500).json({ error: "Lỗi khi cập nhật khoản thu: " + error.message });
+        }
+        
+        res.render("create-khoan-thu", { 
+            error: "Lỗi khi cập nhật khoản thu: " + error.message,
+            formData: req.body
+        });
     }
 });
-
-// Route xóa khoản thu
+// Route xóa khoản thu - HOÀN CHỈNH với lưu lịch sử
 app.delete("/khoan-thu/:id/delete", ensureAuthenticated, ensureAdmin, async (req, res) => {
     try {
         console.log("DELETE request received for ID:", req.params.id);
@@ -607,19 +1056,169 @@ app.delete("/khoan-thu/:id/delete", ensureAuthenticated, ensureAdmin, async (req
                 error: `Không thể xóa khoản thu này vì đã có ${relatedPayments} giao dịch thanh toán liên quan. Vui lòng xóa các giao dịch trước khi xóa khoản thu.` 
             });
         }
+
+        // ===== LƯU LỊCH SỬ DELETE trước khi xóa =====
+        try {
+            // Tạo mô tả chi tiết về khoản thu bị xóa
+            const loaiKhoanThuText = khoanThu.loaiKhoanThu === 0 ? 'Bắt buộc' : 'Tự nguyện';
+            const hanThanhToanText = khoanThu.hanThanhToan ? 
+                new Date(khoanThu.hanThanhToan).toLocaleDateString('vi-VN') : 
+                'Không giới hạn';
+            
+            const deleteDetails = `Xóa khoản thu: ${khoanThu.tenKhoanThu} (${khoanThu.maKhoanThu}) - ` +
+                `Số tiền: ${khoanThu.soTien.toLocaleString('vi-VN')} VNĐ, ` +
+                `Loại: ${loaiKhoanThuText}, ` +
+                `Hạn thanh toán: ${hanThanhToanText}` +
+                `${khoanThu.moTa ? `, Mô tả: ${khoanThu.moTa}` : ''}`;
+
+            const historyRecord = new KhoanThuHistoryCollection({
+                khoanThuId: khoanThu._id,
+                khoanThuData: {
+                    maKhoanThu: khoanThu.maKhoanThu,
+                    tenKhoanThu: khoanThu.tenKhoanThu,
+                    soTien: khoanThu.soTien,
+                    loaiKhoanThu: khoanThu.loaiKhoanThu,
+                    ngayTao: khoanThu.ngayTao,
+                    hanThanhToan: khoanThu.hanThanhToan,
+                    moTa: khoanThu.moTa
+                },
+                actionType: 'DELETE',
+                actionDetails: deleteDetails,
+                changedFields: [], // Không có field nào thay đổi khi xóa
+                oldValues: new Map([
+                    ['maKhoanThu', khoanThu.maKhoanThu],
+                    ['tenKhoanThu', khoanThu.tenKhoanThu],
+                    ['soTien', khoanThu.soTien],
+                    ['loaiKhoanThu', khoanThu.loaiKhoanThu],
+                    ['ngayTao', khoanThu.ngayTao],
+                    ['hanThanhToan', khoanThu.hanThanhToan],
+                    ['moTa', khoanThu.moTa]
+                ]),
+                newValues: new Map(), // Không có giá trị mới khi xóa
+                performedBy: req.session.name || 'Unknown User',
+                performedById: req.session.userId || 'unknown',
+                ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
+                userAgent: req.get('User-Agent') || 'unknown'
+            });
+
+            await historyRecord.save();
+            console.log(`✅ Đã lưu lịch sử xóa khoản thu: ${khoanThu.tenKhoanThu}`);
+        } catch (historyError) {
+            console.error('❌ Lỗi khi lưu lịch sử xóa khoản thu:', historyError);
+            // Không throw error để không ảnh hưởng đến việc xóa khoản thu
+            // Nhưng có thể thông báo cho admin
+        }
+        // ===== KẾT THÚC PHẦN LƯU LỊCH SỬ =====
         
         // Delete the khoản thu
         const deletedKhoanThu = await KhoanThuCollection.findByIdAndDelete(req.params.id);
-        console.log("Deleted khoan thu:", deletedKhoanThu ? "Success" : "Failed");
         
         if (!deletedKhoanThu) {
-            return res.status(500).json({ error: "Không thể xóa khoản thu" });
+            return res.status(404).json({ error: "Không thể xóa khoản thu. Khoản thu không tồn tại." });
         }
         
-        res.json({ success: true, message: "Xóa khoản thu thành công" });
+        console.log(`🗑️ Successfully deleted khoan thu: ${deletedKhoanThu.tenKhoanThu}`);
+        res.json({ 
+            success: true, 
+            message: "Xóa khoản thu thành công! Lịch sử đã được lưu.",
+            deletedItem: {
+                id: deletedKhoanThu._id,
+                name: deletedKhoanThu.tenKhoanThu,
+                code: deletedKhoanThu.maKhoanThu
+            }
+        });
     } catch (error) {
-        console.error("Error deleting khoan thu:", error);
-        res.status(500).json({ error: "Lỗi khi xóa khoản thu: " + error.message });
+        console.error("❌ Error deleting khoan thu:", error);
+        res.status(500).json({ 
+            error: "Lỗi khi xóa khoản thu: " + error.message,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
+});
+
+// ===== API MỚI CHO LỊCH SỬ =====
+
+// API lấy lịch sử khoản thu (với phân trang)
+app.get("/api/khoan-thu-history", ensureAuthenticated, ensureAdmin, async (req, res) => {
+    try {
+        console.log("API khoan-thu-history called");
+        
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const histories = await KhoanThuHistoryCollection.find()
+            .sort({ performedAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const total = await KhoanThuHistoryCollection.countDocuments();
+        
+        console.log("Found histories:", histories.length);
+
+        res.json({
+            success: true,
+            data: histories,
+            pagination: {
+                current: page,
+                total: Math.ceil(total / limit),
+                totalRecords: total
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching history:", error);
+        res.status(500).json({ 
+            success: false,
+            error: "Lỗi khi lấy lịch sử: " + error.message 
+        });
+    }
+});
+
+// API lấy lịch sử cho một khoản thu cụ thể
+app.get("/api/khoan-thu-history/:khoanThuId", ensureAuthenticated, ensureAdmin, async (req, res) => {
+    try {
+        const histories = await KhoanThuHistoryCollection.find({ 
+            khoanThuId: req.params.khoanThuId 
+        }).sort({ performedAt: -1 });
+
+        res.json({ 
+            success: true, 
+            data: histories,
+            count: histories.length
+        });
+    } catch (error) {
+        console.error("Error fetching specific history:", error);
+        res.status(500).json({ 
+            success: false,
+            error: "Lỗi khi lấy lịch sử: " + error.message 
+        });
+    }
+});
+
+// API xóa lịch sử cũ (chỉ admin có thể thực hiện)
+app.delete("/api/khoan-thu-history/cleanup", ensureAuthenticated, ensureAdmin, async (req, res) => {
+    try {
+        // Xóa lịch sử cũ hơn 1 năm (tùy chọn)
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+        const result = await KhoanThuHistoryCollection.deleteMany({
+            performedAt: { $lt: oneYearAgo }
+        });
+
+        console.log(`🧹 Cleaned up ${result.deletedCount} old history records`);
+        
+        res.json({
+            success: true,
+            message: `Đã xóa ${result.deletedCount} bản ghi lịch sử cũ`,
+            deletedCount: result.deletedCount
+        });
+    } catch (error) {
+        console.error("Error cleaning up history:", error);
+        res.status(500).json({ 
+            success: false,
+            error: "Lỗi khi dọn dẹp lịch sử: " + error.message 
+        });
     }
 });
 app.post("/khoan-thu/create", ensureAuthenticated, ensureAdmin, async (req, res) => {
@@ -5161,9 +5760,25 @@ app.get("/cudan/khoan-thu", ensureAuthenticated, ensureCuDan, async (req, res) =
                 payment.khoanThu && payment.khoanThu.toString() === khoanThu._id.toString()
             );
         });
+
+        // Get parking fees for this resident (nếu có ParkingFeeCollection)
+        let parkingFees = [];
+        try {
+            // Kiểm tra xem ParkingFeeCollection có tồn tại không
+            if (typeof ParkingFeeCollection !== 'undefined') {
+                parkingFees = await ParkingFeeCollection.find({
+                    residentName: req.session.name,
+                    apartment: "A0101",
+                    status: 'unpaid'
+                }).populate('vehicleRegistration').sort({ createdAt: -1 });
+            }
+        } catch (parkingError) {
+            console.log("ParkingFeeCollection not available or error fetching parking fees:", parkingError.message);
+        }
         
         res.render("cudan-khoan-thu", { 
             khoanThuList: unpaidKhoanThuList,
+            parkingFees: parkingFees || [],
             user: {
                 name: req.session.name,
                 role: req.session.role,
@@ -6048,6 +6663,761 @@ function numberToWords(num) {
     }
     
     return result.trim();
+}
+
+
+// CẬP NHẬT ROUTE /cudan/khoan-thu ĐỂ BAO GỒM PHÍ GỬI XE
+
+
+// Cron job để tạo phí gửi xe hàng tháng (có thể chạy bằng scheduler)
+async function createMonthlyParkingFees() {
+    try {
+        console.log("Creating monthly parking fees...");
+        
+        // Lấy tất cả xe đã được duyệt
+        const activeVehicles = await VehicleRegistrationCollection.find({ status: 'active' });
+        
+        const now = new Date();
+        const fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        const toDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        for (const vehicle of activeVehicles) {
+            // Kiểm tra xem đã có phí cho tháng này chưa
+            const existingFee = await ParkingFeeCollection.findOne({
+                vehicleRegistration: vehicle._id,
+                fromDate: { $gte: fromDate, $lt: new Date(now.getFullYear(), now.getMonth() + 1, 1) }
+            });
+            
+            if (!existingFee) {
+                await createInitialParkingFee(vehicle);
+                console.log(`Created parking fee for ${vehicle.licensePlate}`);
+            }
+        }
+        
+        console.log("Monthly parking fees creation completed");
+    } catch (error) {
+        console.error("Error creating monthly parking fees:", error);
+    }
+}
+
+
+// API lấy phí gửi xe chưa thanh toán
+app.get("/api/cudan/parking-fees", ensureAuthenticated, ensureCuDan, async (req, res) => {
+    try {
+        const parkingFees = await ParkingFeeCollection.find({
+            residentName: req.session.name,
+            apartment: "A0101",
+            status: 'unpaid'
+        }).populate('vehicleRegistration');
+
+        res.json({
+            success: true,
+            data: parkingFees
+        });
+    } catch (error) {
+        console.error("Error fetching parking fees:", error);
+        res.status(500).json({
+            success: false,
+            error: "Error fetching parking fees"
+        });
+    }
+});
+
+// API thông báo parking
+app.get("/api/cudan/parking-notifications", ensureAuthenticated, ensureCuDan, async (req, res) => {
+    try {
+        const notifications = await ParkingNotificationCollection.find({
+            recipientName: req.session.name,
+            apartment: "A0101"
+        }).sort({ createdAt: -1 }).limit(10);
+
+        res.json({
+            success: true,
+            data: notifications
+        });
+    } catch (error) {
+        console.error("Error fetching notifications:", error);
+        res.status(500).json({
+            success: false,
+            error: "Error fetching notifications"
+        });
+    }
+});
+
+// API đánh dấu thông báo đã đọc
+app.post("/api/cudan/parking-notifications/mark-read", ensureAuthenticated, ensureCuDan, async (req, res) => {
+    try {
+        const { notificationId, markAll } = req.body;
+        
+        if (markAll) {
+            await ParkingNotificationCollection.updateMany(
+                { 
+                    recipientName: req.session.name,
+                    apartment: "A0101",
+                    isRead: false 
+                },
+                { 
+                    isRead: true,
+                    readAt: new Date()
+                }
+            );
+        } else if (notificationId) {
+            await ParkingNotificationCollection.findByIdAndUpdate(
+                notificationId,
+                { 
+                    isRead: true,
+                    readAt: new Date()
+                }
+            );
+        }
+
+        res.json({
+            success: true,
+            message: "Cập nhật thông báo thành công"
+        });
+    } catch (error) {
+        console.error("Error updating notifications:", error);
+        res.status(500).json({
+            success: false,
+            error: "Error updating notifications"
+        });
+    }
+});
+
+// ===============================
+// VEHICLE LOG ROUTES (ADMIN)
+// ===============================
+
+// Ghi nhận xe vào
+app.post("/admin/parking/vehicle-entry", ensureAuthenticated, ensureToQuan, async (req, res) => {
+    try {
+        const { licensePlate, entryTime, notes } = req.body;
+        
+        // Tìm thông tin xe đã đăng ký
+        const vehicle = await VehicleRegistrationCollection.findOne({ 
+            licensePlate: licensePlate.toUpperCase(),
+            status: 'active'
+        });
+        
+        if (!vehicle) {
+            return res.status(404).json({
+                success: false,
+                error: "Xe không được đăng ký hoặc chưa được duyệt"
+            });
+        }
+        
+        // Kiểm tra xe đã vào chưa ra
+        const existingEntry = await VehicleLogCollection.findOne({
+            vehicleRegistration: vehicle._id,
+            status: 'entered'
+        });
+        
+        if (existingEntry) {
+            return res.status(400).json({
+                success: false,
+                error: "Xe này đã vào bãi và chưa ra"
+            });
+        }
+        
+        // Tạo log entry
+        const vehicleLog = new VehicleLogCollection({
+            vehicleRegistration: vehicle._id,
+            licensePlate: vehicle.licensePlate,
+            vehicleType: vehicle.vehicleType,
+            apartment: vehicle.apartment,
+            entryTime: entryTime ? new Date(entryTime) : new Date(),
+            entryStaff: req.session.name,
+            status: 'entered',
+            notes: notes || ""
+        });
+        
+        await vehicleLog.save();
+        
+        res.json({
+            success: true,
+            message: `Ghi nhận xe ${vehicle.licensePlate} vào bãi thành công`,
+            data: vehicleLog
+        });
+    } catch (error) {
+        console.error("Error recording vehicle entry:", error);
+        res.status(500).json({
+            success: false,
+            error: "Lỗi khi ghi nhận xe vào"
+        });
+    }
+});
+
+// Ghi nhận xe ra
+app.post("/admin/parking/vehicle-exit", ensureAuthenticated, ensureToQuan, async (req, res) => {
+    try {
+        const { licensePlate, exitTime, notes } = req.body;
+        
+        // Tìm log entry hiện tại
+        const vehicleLog = await VehicleLogCollection.findOne({
+            licensePlate: licensePlate.toUpperCase(),
+            status: 'entered'
+        }).populate('vehicleRegistration');
+        
+        if (!vehicleLog) {
+            return res.status(404).json({
+                success: false,
+                error: "Không tìm thấy thông tin xe vào bãi"
+            });
+        }
+        
+        // Cập nhật thời gian ra
+        vehicleLog.exitTime = exitTime ? new Date(exitTime) : new Date();
+        vehicleLog.exitStaff = req.session.name;
+        vehicleLog.status = 'exited';
+        if (notes) {
+            vehicleLog.notes = (vehicleLog.notes || "") + " | Ra: " + notes;
+        }
+        
+        await vehicleLog.save();
+        
+        res.json({
+            success: true,
+            message: `Ghi nhận xe ${vehicleLog.licensePlate} ra khỏi bãi thành công`,
+            data: vehicleLog
+        });
+    } catch (error) {
+        console.error("Error recording vehicle exit:", error);
+        res.status(500).json({
+            success: false,
+            error: "Lỗi khi ghi nhận xe ra"
+        });
+    }
+});
+
+// ===============================
+// SAMPLE DATA CREATION FOR TESTING
+// ===============================
+
+// Tạo dữ liệu mẫu cho vehicle system
+async function createVehicleSampleData() {
+    try {
+        console.log("Creating vehicle sample data...");
+        
+        // Tạo một số đăng ký xe mẫu
+        const sampleVehicles = [
+            {
+                resident: "10", // ID của cư dân
+                residentName: "cudan",
+                apartment: "A0101",
+                vehicleType: "motorbike",
+                licensePlate: "29A-12345",
+                vehicleBrand: "Honda",
+                vehicleModel: "Vision",
+                vehicleColor: "Đỏ",
+                parkingSpot: "B1-MOTOR-01",
+                status: "active",
+                cardNumber: "BM12345601",
+                approvedBy: "admin",
+                approvedAt: new Date()
+            },
+            {
+                resident: "10",
+                residentName: "cudan",
+                apartment: "A0101",
+                vehicleType: "car",
+                licensePlate: "29A-67890",
+                vehicleBrand: "Toyota",
+                vehicleModel: "Vios",
+                vehicleColor: "Trắng",
+                parkingSpot: "B1-CAR-01",
+                status: "pending"
+            }
+        ];
+        
+        // Kiểm tra và tạo xe mẫu nếu chưa có
+        for (const vehicleData of sampleVehicles) {
+            const existing = await VehicleRegistrationCollection.findOne({ 
+                licensePlate: vehicleData.licensePlate 
+            });
+            
+            if (!existing) {
+                const vehicle = new VehicleRegistrationCollection(vehicleData);
+                await vehicle.save();
+                
+                // Tạo phí gửi xe cho xe đã được duyệt
+                if (vehicleData.status === 'active') {
+                    await createInitialParkingFee(vehicle);
+                }
+                
+                console.log(`Created sample vehicle: ${vehicleData.licensePlate}`);
+            }
+        }
+        
+        console.log("Vehicle sample data creation completed");
+    } catch (error) {
+        console.error("Error creating vehicle sample data:", error);
+    }
+}
+
+async function createInitialParkingFee(vehicle) {
+    try {
+        // Tạo phí gửi xe cho tháng hiện tại
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth() + 1;
+        const currentYear = currentDate.getFullYear();
+        
+        // Kiểm tra xem đã có phí cho tháng này chưa
+        const existingFee = await ParkingFeeCollection.findOne({
+            vehicleRegistration: vehicle._id,
+            month: currentMonth,
+            year: currentYear
+        });
+        
+        if (!existingFee) {
+            // Xác định mức phí dựa trên loại xe
+            let feeAmount = 0;
+            if (vehicle.vehicleType === 'motorbike') {
+                feeAmount = 200000; // 200k cho xe máy
+            } else if (vehicle.vehicleType === 'car') {
+                feeAmount = 1500000; // 1.5M cho ô tô
+            } else if (vehicle.vehicleType === 'bicycle') {
+                feeAmount = 50000; // 50k cho xe đạp
+            }
+            
+            const newParkingFee = new ParkingFeeCollection({
+                vehicleRegistration: vehicle._id,
+                residentName: vehicle.residentName,
+                apartment: vehicle.apartment,
+                licensePlate: vehicle.licensePlate,
+                vehicleType: vehicle.vehicleType,
+                month: currentMonth,
+                year: currentYear,
+                amount: feeAmount,
+                dueDate: new Date(currentYear, currentMonth, 0), // Cuối tháng
+                status: 'unpaid'
+            });
+            
+            await newParkingFee.save();
+            console.log(`Created parking fee for vehicle: ${vehicle.licensePlate}`);
+        }
+    } catch (error) {
+        console.error("Error creating initial parking fee:", error);
+    }
+}
+
+// ===============================
+// ROUTES CHO CƯ DÂN - QUẢN LÝ XE
+// ===============================
+
+// Trang đăng ký xe mới
+app.get("/cudan/parking/register", ensureAuthenticated, ensureCuDan, async (req, res) => {
+    try {
+        // Lấy danh sách xe đã đăng ký của cư dân
+        const vehicles = await VehicleRegistrationCollection.find({
+            residentName: req.session.name,
+            apartment: "A0101" // Trong thực tế sẽ lấy từ database
+        }).sort({ registrationDate: -1 });
+
+        // Check for success message
+        const success = req.query.success ? "Đăng ký xe thành công! Đơn đăng ký đã được gửi đến ban quản lý để xét duyệt." : null;
+
+        res.render("parking/vehicle-register", {
+            vehicles,
+            success,
+            user: {
+                name: req.session.name,
+                role: req.session.role,
+                id: req.session.userId,
+                apartment: "A0101"
+            }
+        });
+    } catch (error) {
+        console.error("Error loading vehicle registration page:", error);
+        res.status(500).send("Error loading page: " + error.message);
+    }
+});
+
+// Xử lý đăng ký xe mới
+// Sửa lại route xử lý đăng ký xe trong file index.js
+app.post("/cudan/parking/register", ensureAuthenticated, ensureCuDan, async (req, res) => {
+    try {
+        const { vehicleType, licensePlate, vehicleBrand, vehicleModel, vehicleColor, parkingSpot, notes } = req.body;
+        
+        // Validate required fields
+        if (!vehicleType || !licensePlate || !vehicleBrand || !vehicleColor || !parkingSpot) {
+            const vehicles = await VehicleRegistrationCollection.find({
+                residentName: req.session.name,
+                apartment: "A0101"
+            }).sort({ registrationDate: -1 });
+
+            return res.render("parking/vehicle-register", {
+                error: "Vui lòng điền đầy đủ thông tin bắt buộc",
+                formData: req.body,
+                vehicles,
+                user: {
+                    name: req.session.name,
+                    role: req.session.role,
+                    id: req.session.userId,
+                    apartment: "A0101"
+                }
+            });
+        }
+
+        // Check if license plate already exists
+        const existingVehicle = await VehicleRegistrationCollection.findOne({ licensePlate: licensePlate.toUpperCase() });
+        if (existingVehicle) {
+            const vehicles = await VehicleRegistrationCollection.find({
+                residentName: req.session.name,
+                apartment: "A0101"
+            }).sort({ registrationDate: -1 });
+
+            return res.render("parking/vehicle-register", {
+                error: "Biển số xe này đã được đăng ký trong hệ thống",
+                formData: req.body,
+                vehicles,
+                user: {
+                    name: req.session.name,
+                    role: req.session.role,
+                    id: req.session.userId,
+                    apartment: "A0101"
+                }
+            });
+        }
+
+        // FIX: Sử dụng string thay vì ObjectId cho resident field
+        // Vì đây là demo với session userId là string, không phải ObjectId từ database
+        const newVehicle = new VehicleRegistrationCollection({
+            resident: req.session.userId, // Giữ nguyên string
+            residentName: req.session.name,
+            apartment: "A0101", // Trong thực tế sẽ lấy từ database
+            vehicleType,
+            licensePlate: licensePlate.toUpperCase(),
+            vehicleBrand,
+            vehicleModel: vehicleModel || "",
+            vehicleColor,
+            parkingSpot,
+            notes: notes || "",
+            status: 'pending'
+        });
+
+        await newVehicle.save();
+
+        // Create notification for management - FIX: Sử dụng string cho ID
+        try {
+            await createParkingNotification(
+                'admin', // string thay vì ObjectId
+                'Ban quản lý',
+                'admin',
+                'Đăng ký xe mới cần duyệt',
+                `Cư dân ${req.session.name} (căn hộ A0101) đã đăng ký xe ${vehicleType} biển số ${licensePlate.toUpperCase()}`,
+                'general',
+                newVehicle._id
+            );
+        } catch (notificationError) {
+            console.log("Notification creation failed, but vehicle registration succeeded");
+        }
+
+        // Redirect with success message
+        res.redirect("/cudan/parking/register?success=1");
+    } catch (error) {
+        console.error("Error registering vehicle:", error);
+        const vehicles = await VehicleRegistrationCollection.find({
+            residentName: req.session.name,
+            apartment: "A0101"
+        }).sort({ registrationDate: -1 });
+
+        res.render("parking/vehicle-register", {
+            error: "Lỗi khi đăng ký xe: " + error.message,
+            formData: req.body,
+            vehicles,
+            user: {
+                name: req.session.name,
+                role: req.session.role,
+                id: req.session.userId,
+                apartment: "A0101"
+            }
+        });
+    }
+});
+
+// Thanh toán phí gửi xe
+app.post("/cudan/parking/pay-fee", ensureAuthenticated, ensureCuDan, async (req, res) => {
+    try {
+        const { feeId, paymentMethod, ngayNop } = req.body;
+
+        if (!feeId) {
+            return res.status(400).json({
+                success: false,
+                error: "Thiếu thông tin khoản phí cần thanh toán"
+            });
+        }
+
+        // Tìm khoản phí
+        const fee = await ParkingFeeCollection.findById(feeId);
+        if (!fee) {
+            return res.status(404).json({
+                success: false,
+                error: "Không tìm thấy khoản phí"
+            });
+        }
+
+        // Kiểm tra quyền thanh toán
+        if (fee.residentName !== req.session.name) {
+            return res.status(403).json({
+                success: false,
+                error: "Bạn không có quyền thanh toán khoản phí này"
+            });
+        }
+
+        // Parse payment date
+        let paymentDate = new Date();
+        if (ngayNop) {
+            paymentDate = new Date(ngayNop);
+        }
+
+        // Cập nhật trạng thái thanh toán
+        fee.status = 'paid';
+        fee.paidDate = paymentDate;
+        fee.paymentMethod = paymentMethod || 'cash';
+        fee.paidBy = req.session.name;
+
+        await fee.save();
+
+        // Tạo thông báo
+        await createParkingNotification(
+            req.session.userId,
+            req.session.name,
+            "A0101",
+            'Thanh toán phí gửi xe thành công',
+            `Bạn đã thanh toán thành công phí gửi xe cho biển số ${fee.licensePlate} số tiền ${fee.feeAmount.toLocaleString('vi-VN')} VNĐ`,
+            'fee_due',
+            fee.vehicleRegistration
+        );
+
+        res.json({
+            success: true,
+            message: "Thanh toán phí gửi xe thành công!"
+        });
+    } catch (error) {
+        console.error("Error paying parking fee:", error);
+        res.status(500).json({
+            success: false,
+            error: "Lỗi khi thanh toán phí gửi xe"
+        });
+    }
+});
+
+// ===============================
+// ROUTES CHO ADMIN - QUẢN LÝ XE
+// ===============================
+
+// Trang quản lý đăng ký xe (admin)
+app.get("/admin/parking/registrations", ensureAuthenticated, ensureToQuan, async (req, res) => {
+    try {
+        const { status, vehicleType } = req.query;
+        
+        // Build filter
+        let filter = {};
+        if (status) filter.status = status;
+        if (vehicleType) filter.vehicleType = vehicleType;
+
+        // Get vehicle registrations
+        const registrations = await VehicleRegistrationCollection.find(filter)
+            .sort({ registrationDate: -1 });
+
+        // Count by status
+        const pendingCount = await VehicleRegistrationCollection.countDocuments({ status: 'pending' });
+        const activeCount = await VehicleRegistrationCollection.countDocuments({ status: 'active' });
+        const suspendedCount = await VehicleRegistrationCollection.countDocuments({ status: 'suspended' });
+
+        res.render("admin/parking-registrations", {
+            registrations,
+            pendingCount,
+            activeCount,
+            suspendedCount,
+            currentFilter: { status, vehicleType }
+        });
+    } catch (error) {
+        console.error("Error loading vehicle registrations:", error);
+        res.status(500).send("Error loading vehicle registrations: " + error.message);
+    }
+});
+
+// Duyệt đăng ký xe
+app.post("/admin/parking/approve/:id", ensureAuthenticated, ensureToQuan, async (req, res) => {
+    try {
+        const { cardNumber } = req.body;
+        
+        const registration = await VehicleRegistrationCollection.findById(req.params.id);
+        if (!registration) {
+            return res.status(404).json({
+                success: false,
+                error: "Không tìm thấy đăng ký xe"
+            });
+        }
+
+        // Generate card number if not provided
+        const finalCardNumber = cardNumber || generateCardNumber();
+
+        // Update registration
+        registration.status = 'active';
+        registration.cardNumber = finalCardNumber;
+        registration.approvedBy = req.session.name;
+        registration.approvedAt = new Date();
+
+        await registration.save();
+
+        // Create notification for resident
+        await createParkingNotification(
+            registration.resident,
+            registration.residentName,
+            registration.apartment,
+            'Đăng ký xe được duyệt',
+            `Đăng ký xe ${registration.vehicleType} biển số ${registration.licensePlate} đã được duyệt. Số thẻ gửi xe của bạn là: ${finalCardNumber}`,
+            'registration_approved',
+            registration._id
+        );
+
+        // Create initial parking fee
+        await createInitialParkingFee(registration);
+
+        res.json({
+            success: true,
+            message: "Duyệt đăng ký xe thành công"
+        });
+    } catch (error) {
+        console.error("Error approving vehicle registration:", error);
+        res.status(500).json({
+            success: false,
+            error: "Lỗi khi duyệt đăng ký xe"
+        });
+    }
+});
+
+// Từ chối đăng ký xe
+app.post("/admin/parking/reject/:id", ensureAuthenticated, ensureToQuan, async (req, res) => {
+    try {
+        const { reason } = req.body;
+        
+        const registration = await VehicleRegistrationCollection.findById(req.params.id);
+        if (!registration) {
+            return res.status(404).json({
+                success: false,
+                error: "Không tìm thấy đăng ký xe"
+            });
+        }
+
+        // Update registration
+        registration.status = 'cancelled';
+        registration.notes = `Từ chối: ${reason || 'Không đáp ứng yêu cầu'}`;
+        registration.approvedBy = req.session.name;
+        registration.approvedAt = new Date();
+
+        await registration.save();
+
+        // Create notification for resident
+        await createParkingNotification(
+            registration.resident,
+            registration.residentName,
+            registration.apartment,
+            'Đăng ký xe bị từ chối',
+            `Đăng ký xe ${registration.vehicleType} biển số ${registration.licensePlate} bị từ chối. Lý do: ${reason || 'Không đáp ứng yêu cầu'}`,
+            'registration_rejected',
+            registration._id
+        );
+
+        res.json({
+            success: true,
+            message: "Từ chối đăng ký xe thành công"
+        });
+    } catch (error) {
+        console.error("Error rejecting vehicle registration:", error);
+        res.status(500).json({
+            success: false,
+            error: "Lỗi khi từ chối đăng ký xe"
+        });
+    }
+});
+
+// ===============================
+// HELPER FUNCTIONS CHO XE
+// ===============================
+
+// Tạo thông báo parking
+async function createParkingNotification(recipientId, recipientName, apartment, title, message, type, relatedVehicle = null) {
+    try {
+        const notification = new ParkingNotificationCollection({
+            recipient: recipientId, // Giờ đây có thể là string
+            recipientName,
+            apartment,
+            title,
+            message,
+            type,
+            relatedVehicle
+        });
+        
+        await notification.save();
+        return notification;
+    } catch (error) {
+        console.error("Error creating parking notification:", error);
+      
+        return null;
+    }
+}
+// Tạo số thẻ gửi xe
+function generateCardNumber() {
+    const prefix = 'BM';
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    return `${prefix}${timestamp}${random}`;
+}
+
+// Tạo phí gửi xe ban đầu
+async function createInitialParkingFee(registration) {
+    try {
+        // Định nghĩa mức phí theo loại xe
+        const feeRates = {
+            'bicycle': 50000,    // 50k/tháng
+            'motorbike': 150000, // 150k/tháng
+            'car': 500000        // 500k/tháng
+        };
+
+        const feeAmount = feeRates[registration.vehicleType] || 100000;
+        
+        // Tạo phí cho tháng hiện tại
+        const now = new Date();
+        const fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        const toDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const dueDate = new Date(now.getFullYear(), now.getMonth() + 1, 5); // Hạn nộp ngày 5 tháng sau
+
+        const parkingFee = new ParkingFeeCollection({
+            vehicleRegistration: registration._id,
+            residentName: registration.residentName,
+            apartment: registration.apartment,
+            licensePlate: registration.licensePlate,
+            vehicleType: registration.vehicleType,
+            feeAmount,
+            feeType: 'monthly',
+            fromDate,
+            toDate,
+            dueDate,
+            status: 'unpaid'
+        });
+
+        await parkingFee.save();
+
+        // Tạo thông báo về phí
+        await createParkingNotification(
+            registration.resident,
+            registration.residentName,
+            registration.apartment,
+            'Phí gửi xe tháng mới',
+            `Phí gửi xe cho biển số ${registration.licensePlate} đã được tạo. Số tiền: ${feeAmount.toLocaleString('vi-VN')} VNĐ. Hạn nộp: ${dueDate.toLocaleDateString('vi-VN')}`,
+            'fee_due',
+            registration._id
+        );
+
+        console.log(`Created parking fee for vehicle ${registration.licensePlate}: ${feeAmount.toLocaleString('vi-VN')} VNĐ`);
+        return parkingFee;
+    } catch (error) {
+        console.error("Error creating initial parking fee:", error);
+        throw error;
+    }
 }
 // Start the server
 const port = process.env.PORT || 5000;

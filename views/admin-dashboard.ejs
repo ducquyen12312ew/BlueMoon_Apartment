@@ -313,6 +313,77 @@
             font-size: 14px;
             color: #888;
         }
+
+        /* History Section Styles */
+        .action-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .action-create {
+            background-color: rgba(28, 200, 138, 0.1);
+            color: #1cc88a;
+            border: 1px solid rgba(28, 200, 138, 0.2);
+        }
+
+        .action-edit {
+            background-color: rgba(246, 194, 62, 0.1);
+            color: #f6c23e;
+            border: 1px solid rgba(246, 194, 62, 0.2);
+        }
+
+        .action-delete {
+            background-color: rgba(231, 74, 59, 0.1);
+            color: #e74a3b;
+            border: 1px solid rgba(231, 74, 59, 0.2);
+        }
+
+        #historyTable tbody tr:hover {
+            background-color: rgba(78, 115, 223, 0.02);
+        }
+
+        .time-ago {
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .history-detail {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-detail:hover {
+            white-space: normal;
+            overflow: visible;
+        }
+
+        .history-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .history-stat {
+            text-align: center;
+        }
+
+        .history-stat-number {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .history-stat-label {
+            font-size: 12px;
+            color: #6c757d;
+        }
         
         /* Responsive Styles */
         @media (max-width: 1200px) {
@@ -330,11 +401,21 @@
                 flex: 1 0 45%;
                 margin-bottom: 20px;
             }
+
+            .history-stats {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
         }
         
         @media (max-width: 768px) {
             .main-content {
                 margin-left: var(--sidebar-width);
+            }
+
+            .history-stats {
+                flex-direction: column;
+                gap: 10px;
             }
         }
         
@@ -365,6 +446,10 @@
             .main-content {
                 margin-left: 60px;
                 padding: 15px;
+            }
+
+            .history-table {
+                font-size: 12px;
             }
         }
     </style>
@@ -405,6 +490,49 @@
                 Trang Chủ Quản Lý
             </h1>
             <p class="page-subtitle">Tổng quan về tình hình quản lý BlueMoon Apartment</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-row">
+            <div class="stat-card stat-card-blue">
+                <div class="stat-info">
+                    <h2><%= typeof totalApartments !== 'undefined' ? totalApartments : '245' %></h2>
+                    <p>Tổng căn hộ</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-home"></i>
+                </div>
+            </div>
+            
+            <div class="stat-card stat-card-orange">
+                <div class="stat-info">
+                    <h2><%= typeof totalResidents !== 'undefined' ? totalResidents : '789' %></h2>
+                    <p>Tổng cư dân</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            
+            <div class="stat-card stat-card-purple">
+                <div class="stat-info">
+                    <h2><%= typeof paymentPercentage !== 'undefined' ? paymentPercentage : '89.5' %>%</h2>
+                    <p>Tỷ lệ thanh toán</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+            </div>
+            
+            <div class="stat-card stat-card-red">
+                <div class="stat-info">
+                    <h2><%= typeof unpaidHouseholds !== 'undefined' ? unpaidHouseholds : '25' %></h2>
+                    <p>Hộ chưa thanh toán</p>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
         </div>
 
         <!-- Charts Row -->
@@ -533,11 +661,59 @@
                 </div>
             </div>
         </div>
+
+        <!-- THÊM MỚI: History Section - Lịch sử chỉnh sửa khoản thu -->
+        <div class="content-row">
+            <div class="content-card">
+                <div class="content-card-header">
+                    <h3 class="content-card-title">
+                        <i class="fas fa-history"></i>
+                        Lịch sử chỉnh sửa khoản thu
+                    </h3>
+                    <div class="history-stats">
+                        <div class="history-stat">
+                            <div class="history-stat-number text-warning" id="editCount">0</div>
+                            <div class="history-stat-label">Chỉnh sửa</div>
+                        </div>
+                        <div class="history-stat">
+                            <div class="history-stat-number text-danger" id="deleteCount">0</div>
+                            <div class="history-stat-label">Xóa</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="content-card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover history-table" id="historyTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Hành động</th>
+                                    <th>Khoản thu</th>
+                                    <th>Chi tiết</th>
+                                    <th>Người thực hiện</th>
+                                    <th>Thời gian</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <!-- History data will be loaded here -->
+                            </tbody>
+                        </table>
+                        <div id="noHistoryMessage" class="text-center py-5" style="display: none;">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Chưa có lịch sử nào</h5>
+                            <p class="text-muted">Lịch sử chỉnh sửa khoản thu sẽ được hiển thị tại đây</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+
+<script>
         document.addEventListener('DOMContentLoaded', function() {
+            console.log("Dashboard loaded, initializing...");
+            
             // Bar Chart
             const barChartCtx = document.getElementById('barChart').getContext('2d');
             const barChart = new Chart(barChartCtx, {
@@ -619,7 +795,244 @@
                     this.classList.add('active');
                 });
             });
+
+            // ===== HISTORY FUNCTIONALITY =====
+            console.log("Initializing history...");
+            
+            // Kiểm tra các elements có tồn tại không
+            const historyTableBody = document.getElementById('historyTableBody');
+            const noHistoryMessage = document.getElementById('noHistoryMessage');
+            const createCountElement = document.getElementById('createCount');
+            const editCountElement = document.getElementById('editCount');
+            const deleteCountElement = document.getElementById('deleteCount');
+            
+            if (!historyTableBody) {
+                console.error("historyTableBody not found");
+                return;
+            }
+            
+            // Load history data ngay khi trang load
+            loadKhoanThuHistory();
+            
+            // Auto refresh history every 30 seconds
+            setInterval(loadKhoanThuHistory, 30000);
         });
+
+        // Function để load lịch sử khoản thu
+        async function loadKhoanThuHistory() {
+            try {
+                console.log("Loading history data...");
+                const response = await fetch('/api/khoan-thu-history?limit=10');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log("History API response:", data);
+                
+                if (data.success && data.data) {
+                    displayHistory(data.data);
+                    updateHistoryStats(data.data);
+                } else {
+                    console.log("No history data or API returned error:", data);
+                    showNoHistoryMessage();
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+                showNoHistoryMessage();
+            }
+        }
+
+        // Function để hiển thị lịch sử
+        function displayHistory(historyData) {
+            console.log("Displaying history:", historyData.length, "records");
+            
+            const tableBody = document.getElementById('historyTableBody');
+            const noHistoryMessage = document.getElementById('noHistoryMessage');
+            
+            if (!tableBody) {
+                console.error("historyTableBody element not found");
+                return;
+            }
+            
+            if (historyData.length === 0) {
+                showNoHistoryMessage();
+                return;
+            }
+
+            // Hide no history message and clear table
+            if (noHistoryMessage) {
+                noHistoryMessage.style.display = 'none';
+            }
+            tableBody.innerHTML = '';
+
+            historyData.forEach((record, index) => {
+                console.log(`Processing record ${index + 1}:`, record);
+                
+                const row = document.createElement('tr');
+                
+                const actionBadge = getActionBadge(record.actionType);
+                const formattedTime = formatDateTime(record.performedAt);
+                const timeAgo = getTimeAgo(record.performedAt);
+                
+                // Safely access nested properties với fallback values
+                const tenKhoanThu = record.khoanThuData?.tenKhoanThu || 'Không có tên';
+                const maKhoanThu = record.khoanThuData?.maKhoanThu || 'Không có mã';
+                const actionDetails = record.actionDetails || 'Không có chi tiết';
+                const performedBy = record.performedBy || 'Không xác định';
+                const performedById = record.performedById || 'unknown';
+                
+                row.innerHTML = `
+                    <td>${actionBadge}</td>
+                    <td>
+                        <div class="fw-bold">${tenKhoanThu}</div>
+                        <small class="text-muted">${maKhoanThu}</small>
+                    </td>
+                    <td>
+                        <div class="history-detail" title="${actionDetails}">
+                            ${actionDetails}
+                        </div>
+                        ${record.changedFields && record.changedFields.length > 0 ? 
+                            `<small class="text-muted">Đã thay đổi: ${record.changedFields.join(', ')}</small>` : 
+                            ''
+                        }
+                    </td>
+                    <td>
+                        <div class="fw-bold">${performedBy}</div>
+                        <small class="text-muted">ID: ${performedById}</small>
+                    </td>
+                    <td>
+                        <div>${formattedTime}</div>
+                        <small class="time-ago">${timeAgo}</small>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            console.log("History table updated with", historyData.length, "rows");
+        }
+
+        // Function để hiển thị thống kê
+        function updateHistoryStats(historyData) {
+            const stats = {
+                create: 0,
+                edit: 0,
+                delete: 0
+            };
+
+            historyData.forEach(record => {
+                switch(record.actionType) {
+                    case 'CREATE':
+                        stats.create++;
+                        break;
+                    case 'EDIT':
+                        stats.edit++;
+                        break;
+                    case 'DELETE':
+                        stats.delete++;
+                        break;
+                }
+            });
+
+            console.log("Updating stats:", stats);
+
+            // Update với safe element checking
+            const createCountElement = document.getElementById('createCount');
+            const editCountElement = document.getElementById('editCount');
+            const deleteCountElement = document.getElementById('deleteCount');
+            
+            if (createCountElement) createCountElement.textContent = stats.create;
+            if (editCountElement) editCountElement.textContent = stats.edit;
+            if (deleteCountElement) deleteCountElement.textContent = stats.delete;
+        }
+
+        // Function để hiển thị message khi không có history
+        function showNoHistoryMessage() {
+            console.log("Showing no history message");
+            
+            const tableBody = document.getElementById('historyTableBody');
+            const noHistoryMessage = document.getElementById('noHistoryMessage');
+            
+            if (tableBody) {
+                tableBody.innerHTML = '';
+            }
+            
+            if (noHistoryMessage) {
+                noHistoryMessage.style.display = 'block';
+            }
+            
+            // Reset stats
+            const createCountElement = document.getElementById('createCount');
+            const editCountElement = document.getElementById('editCount');
+            const deleteCountElement = document.getElementById('deleteCount');
+            
+            if (createCountElement) createCountElement.textContent = '0';
+            if (editCountElement) editCountElement.textContent = '0';
+            if (deleteCountElement) deleteCountElement.textContent = '0';
+        }
+
+        // Helper functions
+        function getActionBadge(actionType) {
+            switch(actionType) {
+                case 'CREATE':
+                    return '<span class="action-badge action-create"><i class="fas fa-plus"></i> Tạo mới</span>';
+                case 'EDIT':
+                    return '<span class="action-badge action-edit"><i class="fas fa-edit"></i> Chỉnh sửa</span>';
+                case 'DELETE':
+                    return '<span class="action-badge action-delete"><i class="fas fa-trash"></i> Xóa</span>';
+                default:
+                    return '<span class="action-badge"><i class="fas fa-question"></i> Không xác định</span>';
+            }
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return 'Không có thời gian';
+            
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'Thời gian không hợp lệ';
+            
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
+        }
+
+        function getTimeAgo(dateString) {
+            if (!dateString) return 'Không xác định';
+            
+            const now = new Date();
+            const date = new Date(dateString);
+            
+            if (isNaN(date.getTime())) return 'Thời gian không hợp lệ';
+            
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 60) {
+                return 'Vừa xong';
+            } else if (diffInSeconds < 3600) {
+                const minutes = Math.floor(diffInSeconds / 60);
+                return `${minutes} phút trước`;
+            } else if (diffInSeconds < 86400) {
+                const hours = Math.floor(diffInSeconds / 3600);
+                return `${hours} giờ trước`;
+            } else {
+                const days = Math.floor(diffInSeconds / 86400);
+                return `${days} ngày trước`;
+            }
+        }
+
+        // Function để refresh history manually (có thể gọi từ console để test)
+        function refreshHistory() {
+            console.log("Manually refreshing history...");
+            loadKhoanThuHistory();
+        }
+
+        // Expose functions globally for debugging
+        window.refreshHistory = refreshHistory;
+        window.loadKhoanThuHistory = loadKhoanThuHistory;
     </script>
-</body>
-</html>

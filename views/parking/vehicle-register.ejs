@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký xe - BlueMoon</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #333333;
+            --light-color: #555555;
+            --dark-color: #222222;
+            --sidebar-width: 250px;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fc;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--primary-color);
+            position: fixed;
+            left: 0;
+            top: 0;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .sidebar-menu {
+            padding: 25px 0;
+        }
+        
+        .menu-item {
+            padding: 18px 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .menu-item:hover {
+            background-color: var(--dark-color);
+            color: white;
+        }
+        
+        .menu-item.active {
+            background-color: var(--dark-color);
+            border-left: 5px solid white;
+        }
+        
+        .menu-item i {
+            margin-right: 15px;
+            width: 24px;
+            text-align: center;
+            font-size: 20px;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            padding: 18px 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+        }
+        
+        .logout-btn:hover {
+            background-color: var(--dark-color);
+        }
+        
+        .logout-btn i {
+            margin-right: 15px;
+            font-size: 20px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-title-section {
+            flex: 1;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .page-title i {
+            margin-right: 15px;
+            color: var(--primary-color);
+        }
+        
+        .page-description {
+            color: #6c757d;
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        /* New Vehicle Button - Smaller */
+        .new-vehicle-btn {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--light-color) 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        
+        .new-vehicle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .new-vehicle-btn i {
+            font-size: 16px;
+        }
+        
+        /* Card Styles */
+        .content-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--light-color) 100%);
+            color: white;
+            padding: 20px;
+            border: none;
+        }
+        
+        .card-header h5 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-header i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .card-body {
+            padding: 30px;
+        }
+        
+        /* Registration Form - Hidden by default */
+        .registration-form {
+            display: none;
+            animation: fadeInDown 0.5s ease-out;
+        }
+        
+        .registration-form.show {
+            display: block;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .form-control {
+            height: 50px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(51, 51, 51, 0.25);
+        }
+        
+        .form-select {
+            height: 50px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(51, 51, 51, 0.25);
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--light-color) 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 15px;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-cancel {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 15px;
+        }
+        
+        .btn-cancel:hover {
+            background: #c82333;
+            color: white;
+            text-decoration: none;
+        }
+        
+        /* Vehicle List Styles */
+        .vehicle-list {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .vehicle-card {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .vehicle-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .vehicle-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .vehicle-info {
+            flex: 1;
+        }
+        
+        .vehicle-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .vehicle-subtitle {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .vehicle-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-suspended {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .vehicle-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .detail-item i {
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        /* Alert Styles */
+        .alert-custom {
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            border: none;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h4 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+            
+            .sidebar-header {
+                font-size: 18px;
+                padding: 15px 0;
+            }
+            
+            .menu-item span,
+            .logout-btn span {
+                display: none;
+            }
+            
+            .menu-item i,
+            .logout-btn i {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-left: 60px;
+                padding: 15px;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .new-vehicle-btn {
+                align-self: flex-end;
+            }
+            
+            .vehicle-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            BLUEMOON
+        </div>
+        <div class="sidebar-menu">
+            <a href="/cudan/dashboard" class="menu-item">
+                <i class="fas fa-home"></i>
+                <span>Trang chủ</span>
+            </a>
+            <a href="/cudan/khoan-thu" class="menu-item">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Nộp phí</span>
+            </a>
+            <a href="/cudan/parking" class="menu-item active">
+                <i class="fas fa-car"></i>
+                <span>Quản lý xe</span>
+            </a>
+            <a href="/cudan/feedback" class="menu-item">
+                <i class="fas fa-comment-alt"></i>
+                <span>Phản ánh</span>
+            </a>
+            <a href="/cudan/thong-tin" class="menu-item">
+                <i class="fas fa-user"></i>
+                <span>Thông tin cá nhân</span>
+            </a>
+        </div>
+        <div class="logout-btn">
+            <a href="/logout" style="color: white; text-decoration: none; display: flex; align-items: center;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>ĐĂNG XUẤT</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <div class="page-title-section">
+                <h1 class="page-title">
+                    <i class="fas fa-car"></i>
+                    Quản lý xe
+                </h1>
+                <p class="page-description">Đăng ký xe và theo dõi tình trạng phương tiện của bạn</p>
+            </div>
+            <button class="new-vehicle-btn" id="showRegistrationForm">
+                <i class="fas fa-plus"></i>
+                Đăng ký xe mới
+            </button>
+        </div>
+
+        <!-- Vehicle Registration Form (Hidden by default) -->
+        <div class="content-card registration-form" id="registrationForm">
+            <div class="card-header">
+                <h5>
+                    <i class="fas fa-edit"></i>
+                    Thông tin đăng ký xe
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert-custom alert-success" id="successAlert" style="display: none;">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span id="successMessage"></span>
+                </div>
+                
+                <div class="alert-custom alert-error" id="errorAlert" style="display: none;">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <span id="errorMessage"></span>
+                </div>
+
+                <form action="/cudan/parking/register" method="POST" id="vehicleForm">
+                    <!-- Hidden field for parking spot with default value -->
+                    <input type="hidden" name="parkingSpot" value="TBA">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vehicleType" class="form-label">
+                                    <i class="fas fa-car"></i> Loại xe *
+                                </label>
+                                <select class="form-select" id="vehicleType" name="vehicleType" required>
+                                    <option value="">Chọn loại xe</option>
+                                    <option value="motorbike">Xe máy</option>
+                                    <option value="car">Ô tô</option>
+                                    <option value="bicycle">Xe đạp</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="licensePlate" class="form-label">
+                                    <i class="fas fa-id-card"></i> Biển số xe *
+                                </label>
+                                <input type="text" class="form-control" id="licensePlate" name="licensePlate" 
+                                       placeholder="Ví dụ: 29A-12345" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vehicleBrand" class="form-label">
+                                    <i class="fas fa-tags"></i> Hãng xe *
+                                </label>
+                                <input type="text" class="form-control" id="vehicleBrand" name="vehicleBrand" 
+                                       placeholder="Ví dụ: Honda, Toyota, Yamaha" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vehicleModel" class="form-label">
+                                    <i class="fas fa-cog"></i> Dòng xe
+                                </label>
+                                <input type="text" class="form-control" id="vehicleModel" name="vehicleModel" 
+                                       placeholder="Ví dụ: Vision, Vios, Winner X">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vehicleColor" class="form-label">
+                                    <i class="fas fa-palette"></i> Màu xe *
+                                </label>
+                                <input type="text" class="form-control" id="vehicleColor" name="vehicleColor" 
+                                       placeholder="Ví dụ: Đỏ, Xanh, Trắng, Đen" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes" class="form-label">
+                            <i class="fas fa-sticky-note"></i> Ghi chú
+                        </label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                  placeholder="Ghi chú thêm về xe (không bắt buộc)"></textarea>
+                    </div>
+
+                    <div class="alert-custom alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Lưu ý:</strong> Sau khi đăng ký, thông tin sẽ được gửi đến ban quản lý để xét duyệt. 
+                        Bạn sẽ nhận được thông báo qua hệ thống khi đăng ký được phê duyệt.
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn-cancel" id="cancelForm">
+                            <i class="fas fa-times"></i> Hủy
+                        </button>
+                        <button type="submit" class="btn-submit">
+                            <i class="fas fa-paper-plane"></i> Gửi đăng ký
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Current Vehicles Section -->
+        <div class="content-card">
+            <div class="card-header">
+                <h5>
+                    <i class="fas fa-list"></i>
+                    Xe đã đăng ký
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="vehiclesList">
+                    <% if (typeof vehicles !== 'undefined' && vehicles.length > 0) { %>
+                        <!-- Existing vehicles from server -->
+                        <div class="vehicle-list" id="vehiclesContainer">
+                            <% vehicles.forEach(function(vehicle) { %>
+                            <div class="vehicle-card">
+                                <div class="vehicle-header">
+                                    <div class="vehicle-info">
+                                        <div class="vehicle-title">
+                                            <i class="fas fa-<%= vehicle.vehicleType === 'car' ? 'car' : vehicle.vehicleType === 'motorbike' ? 'motorcycle' : 'bicycle' %>"></i>
+                                            <%= vehicle.licensePlate %>
+                                        </div>
+                                        <div class="vehicle-subtitle">
+                                            <%= vehicle.vehicleBrand %> <%= vehicle.vehicleModel || '' %>
+                                        </div>
+                                    </div>
+                                    <div class="vehicle-status status-<%= vehicle.status %>">
+                                        <%= vehicle.status === 'pending' ? 'Chờ duyệt' : 
+                                            vehicle.status === 'active' ? 'Đã duyệt' : 
+                                            vehicle.status === 'suspended' ? 'Tạm dừng' : 'Đã hủy' %>
+                                    </div>
+                                </div>
+                                
+                                <div class="vehicle-details">
+                                    <div class="detail-item">
+                                        <i class="fas fa-palette"></i>
+                                        <span class="detail-label">Màu sắc:</span>
+                                        <span><%= vehicle.vehicleColor %></span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span class="detail-label">Vị trí:</span>
+                                        <span><%= vehicle.parkingSpot %></span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-calendar"></i>
+                                        <span class="detail-label">Ngày đăng ký:</span>
+                                        <span><%= new Date(vehicle.registrationDate).toLocaleDateString('vi-VN') %></span>
+                                    </div>
+                                    <% if (vehicle.cardNumber) { %>
+                                    <div class="detail-item">
+                                        <i class="fas fa-id-badge"></i>
+                                        <span class="detail-label">Số thẻ:</span>
+                                        <span><%= vehicle.cardNumber %></span>
+                                    </div>
+                                    <% } %>
+                                </div>
+                                
+                                <% if (vehicle.notes) { %>
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-sticky-note"></i>
+                                        <strong>Ghi chú:</strong> <%= vehicle.notes %>
+                                    </small>
+                                </div>
+                                <% } %>
+                            </div>
+                            <% }); %>
+                        </div>
+                    <% } else { %>
+                        <!-- Empty state - shown when no vehicles -->
+                        <div class="empty-state" id="emptyState">
+                            <i class="fas fa-car"></i>
+                            <h4>Chưa có xe nào được đăng ký</h4>
+                            <p>Nhấn nút "Đăng ký xe mới" để bắt đầu đăng ký xe của bạn</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const showFormBtn = document.getElementById('showRegistrationForm');
+            const registrationForm = document.getElementById('registrationForm');
+            const cancelFormBtn = document.getElementById('cancelForm');
+            const form = document.getElementById('vehicleForm');
+            const vehicleType = document.getElementById('vehicleType');
+            const licensePlate = document.getElementById('licensePlate');
+            
+            // Show/Hide form functions
+            function showForm() {
+                registrationForm.classList.add('show');
+                showFormBtn.style.display = 'none';
+                // Scroll to form
+                registrationForm.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            function hideForm() {
+                registrationForm.classList.remove('show');
+                showFormBtn.style.display = 'flex';
+                // Reset form
+                form.reset();
+                // Clear alerts
+                document.getElementById('successAlert').style.display = 'none';
+                document.getElementById('errorAlert').style.display = 'none';
+                // Reset parking spot options
+                resetParkingSpotOptions();
+            }
+            
+            function resetParkingSpotOptions() {
+                // No longer needed since parking spot field is removed
+            }
+            
+            // Event listeners
+            showFormBtn.addEventListener('click', showForm);
+            cancelFormBtn.addEventListener('click', hideForm);
+            
+            // Update parking spot options based on vehicle type (removed)
+            // This functionality is no longer needed since parking spot field is removed
+            
+            // License plate validation
+            licensePlate.addEventListener('input', function() {
+                let value = this.value.toUpperCase();
+                
+                // Remove invalid characters
+                value = value.replace(/[^A-Z0-9\-\.]/g, '');
+                
+                this.value = value;
+            });
+            
+            // Auto-format license plate based on vehicle type
+            vehicleType.addEventListener('change', function() {
+                const type = this.value;
+                const licensePlateInput = document.getElementById('licensePlate');
+                
+                if (type === 'bicycle') {
+                    licensePlateInput.placeholder = 'Xe đạp không cần biển số (nhập mã định danh nếu có)';
+                    licensePlateInput.required = false;
+                } else if (type === 'motorbike') {
+                    licensePlateInput.placeholder = 'Ví dụ: 29A1-12345';
+                    licensePlateInput.required = true;
+                } else if (type === 'car') {
+                    licensePlateInput.placeholder = 'Ví dụ: 29A-123.45';
+                    licensePlateInput.required = true;
+                } else {
+                    licensePlateInput.placeholder = 'Nhập biển số xe';
+                    licensePlateInput.required = true;
+                }
+            });
+            
+            // Form submission
+            form.addEventListener('submit', function(e) {
+                const vehicleTypeValue = vehicleType.value;
+                const licensePlateValue = licensePlate.value.trim();
+                const vehicleBrand = document.getElementById('vehicleBrand').value.trim();
+                const vehicleColor = document.getElementById('vehicleColor').value.trim();
+                
+                // Validation
+                if (!vehicleTypeValue || !licensePlateValue || !vehicleBrand || !vehicleColor) {
+                    e.preventDefault();
+                    showAlert('error', 'Vui lòng điền đầy đủ thông tin bắt buộc!');
+                    return;
+                }
+                
+                // Simple license plate validation
+                if (vehicleTypeValue !== 'bicycle' && licensePlateValue.length < 6) {
+                    e.preventDefault();
+                    showAlert('error', 'Biển số xe không hợp lệ! Vui lòng nhập đúng định dạng.');
+                    licensePlate.focus();
+                    return;
+                }
+                
+                // Show loading state
+                const submitBtn = form.querySelector('.btn-submit');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+                submitBtn.disabled = true;
+                
+                // Allow form to submit normally - remove the demo simulation
+                // The form will now submit to server via POST method
+            });
+            
+            // Show alert function
+            function showAlert(type, message) {
+                const successAlert = document.getElementById('successAlert');
+                const errorAlert = document.getElementById('errorAlert');
+                const successMessage = document.getElementById('successMessage');
+                const errorMessage = document.getElementById('errorMessage');
+                
+                // Hide all alerts first
+                successAlert.style.display = 'none';
+                errorAlert.style.display = 'none';
+                
+                if (type === 'success') {
+                    successMessage.textContent = message;
+                    successAlert.style.display = 'block';
+                } else if (type === 'error') {
+                    errorMessage.textContent = message;
+                    errorAlert.style.display = 'block';
+                }
+                
+                // Scroll to alert
+                setTimeout(() => {
+                    const alertElement = type === 'success' ? successAlert : errorAlert;
+                    alertElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+            }
+            
+            // Add vehicle to list function (demo)
+            function addVehicleToList(vehicle) {
+                // Get the vehicles container
+                const vehiclesList = document.getElementById('vehiclesList');
+                const emptyState = document.getElementById('emptyState');
+                let vehiclesContainer = document.getElementById('vehiclesContainer');
+                
+                // If empty state exists, hide it and create vehicle container
+                if (emptyState && emptyState.style.display !== 'none') {
+                    emptyState.style.display = 'none';
+                    
+                    // Create vehicle list container if it doesn't exist
+                    if (!vehiclesContainer) {
+                        vehiclesContainer = document.createElement('div');
+                        vehiclesContainer.className = 'vehicle-list';
+                        vehiclesContainer.id = 'vehiclesContainer';
+                        vehiclesList.appendChild(vehiclesContainer);
+                    }
+                } else if (!vehiclesContainer) {
+                    // Create vehicle container if it doesn't exist
+                    vehiclesContainer = document.createElement('div');
+                    vehiclesContainer.className = 'vehicle-list';
+                    vehiclesContainer.id = 'vehiclesContainer';
+                    vehiclesList.appendChild(vehiclesContainer);
+                }
+                
+                vehiclesContainer.style.display = 'block';
+                
+                const vehicleIcon = vehicle.type === 'car' ? 'car' : vehicle.type === 'motorbike' ? 'motorcycle' : 'bicycle';
+                const statusClass = vehicle.status === 'pending' ? 'status-pending' : 
+                                  vehicle.status === 'active' ? 'status-active' : 'status-suspended';
+                const statusText = vehicle.status === 'pending' ? 'Chờ duyệt' : 
+                                 vehicle.status === 'active' ? 'Đã duyệt' : 'Tạm dừng';
+                
+                const vehicleCard = document.createElement('div');
+                vehicleCard.className = 'vehicle-card';
+                vehicleCard.style.animation = 'fadeInDown 0.5s ease-out';
+                
+                vehicleCard.innerHTML = `
+                    <div class="vehicle-header">
+                        <div class="vehicle-info">
+                            <div class="vehicle-title">
+                                <i class="fas fa-${vehicleIcon}"></i>
+                                ${vehicle.licensePlate}
+                            </div>
+                            <div class="vehicle-subtitle">
+                                ${vehicle.brand} ${vehicle.model}
+                            </div>
+                        </div>
+                        <div class="vehicle-status ${statusClass}">
+                            ${statusText}
+                        </div>
+                    </div>
+                    
+                    <div class="vehicle-details">
+                        <div class="detail-item">
+                            <i class="fas fa-palette"></i>
+                            <span class="detail-label">Màu sắc:</span>
+                            <span>${vehicle.color}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span class="detail-label">Vị trí:</span>
+                            <span>${vehicle.parkingSpot}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-calendar"></i>
+                            <span class="detail-label">Ngày đăng ký:</span>
+                            <span>${new Date().toLocaleDateString('vi-VN')}</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Add to the beginning of the vehicle list
+                vehiclesContainer.insertBefore(vehicleCard, vehiclesContainer.firstChild);
+            }
+            
+            // Check if vehicles exist from server data (no demo override needed)
+        });
+    </script>
+</body>
+</html>

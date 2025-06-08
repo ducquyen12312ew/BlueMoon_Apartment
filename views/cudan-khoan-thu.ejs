@@ -528,34 +528,27 @@
         <div class="sidebar-header">
             BLUEMOON
         </div>
-        <div class="sidebar">
-            <div class="sidebar-header">
-                BLUEMOON
-            </div>
-            <div class="sidebar-menu">
-                <a href="/cudan/dashboard" class="menu-item">
-                    <i class="fas fa-home"></i>
-                    <span>Trang chủ</span>
-                </a>
-                <a href="/cudan/khoan-thu" class="menu-item active">
-                    <i class="fas fa-money-bill-wave"></i>
-                    <span>Nộp phí</span>
-                </a>
-                <a href="/cudan/feedback" class="menu-item">
-                    <i class="fas fa-comment-alt"></i>
-                    <span>Phản ánh</span>
-                </a>
-                <a href="/cudan/thong-tin" class="menu-item">
-                    <i class="fas fa-user"></i>
-                    <span>Thông tin cá nhân</span>
-                </a>
-            </div>
-            <div class="logout-btn">
-                <a href="/logout" style="color: white; text-decoration: none; display: flex; align-items: center;">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>ĐĂNG XUẤT</span>
-                </a>
-            </div>
+        <div class="sidebar-menu">
+            <a href="/cudan/dashboard" class="menu-item">
+                <i class="fas fa-home"></i>
+                <span>Trang chủ</span>
+            </a>
+            <a href="/cudan/khoan-thu" class="menu-item active">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Nộp phí</span>
+            </a>
+            <a href="/cudan/parking/register" class="menu-item">
+                <i class="fas fa-car"></i>
+                <span>Quản lý xe</span>
+            </a>
+            <a href="/cudan/feedback" class="menu-item">
+                <i class="fas fa-comment-alt"></i>
+                <span>Phản ánh</span>
+            </a>
+            <a href="/cudan/thong-tin" class="menu-item">
+                <i class="fas fa-user"></i>
+                <span>Thông tin cá nhân</span>
+            </a>
         </div>
         <div class="logout-btn">
             <a href="/logout" style="color: white; text-decoration: none; display: flex; align-items: center;">
@@ -710,7 +703,11 @@
                                 <p>Quét mã QR bên dưới để thanh toán:</p>
                                 <div class="d-flex justify-content-center my-3">
                                     <div style="background-color: white; padding: 15px; border-radius: 10px;">
-                                        <img src="https://via.placeholder.com/200x200?text=QR+Code" alt="QR Code" class="img-fluid" style="max-width: 200px;">
+                                        <div class="d-flex justify-content-center my-3">
+                                            <div style="background-color: white; padding: 15px; border-radius: 10px;">
+                                                <img src="/image/qrcode.png" alt="QR Code" class="img-fluid" style="max-width: 200px;">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <p>Hoặc mở ứng dụng ngân hàng và quét mã QR để thanh toán</p>
